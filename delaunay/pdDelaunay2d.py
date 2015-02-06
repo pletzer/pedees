@@ -6,10 +6,10 @@ import math
 class Delaunay2d:
 
   # threshold for declaring a triangle non-degenerate
-  self.MIN_AREA = 1.23456789e-14
-  self.EPS = 1.23456789e-14
+  MIN_AREA = 1.23456789e-14
+  EPS = 1.23456789e-14
 
-	def __init__(self, points, edges, holes):
+  def __init__(self, points, edges=None, holes=None):
     """
     Constructor 
     @param points list of points
@@ -19,7 +19,7 @@ class Delaunay2d:
     """
 
     # list of vertices
-		self.xyPoints = points[:]
+    self.xyPoints = points[:]
 
     # list of integer 3-tuples
     self.triangles = []
@@ -46,7 +46,7 @@ class Delaunay2d:
       for edge in allEdges:
         flipped |= self._flipEdge(edge)
 
-	def triangulate(self):
+  def triangulate(self):
     npoints = len(self.xyPoints)
     if npoints < 3: 
       # need at least 3 points
@@ -68,7 +68,7 @@ class Delaunay2d:
     t = numpy.array([0, 1, 2])
     formedFirstTriangle = False
     while not formedFirstTriangle:
-      if abs(self.getArea(t)) > self.MIN_AREA:
+      if abs(self._getArea(t)) > self.MIN_AREA:
         formedFirstTriangle = True
       else:
         # skip point closest to the center of gravity
@@ -138,7 +138,8 @@ class Delaunay2d:
     edgeIndicesToRemove = []
     newBoundaryEdges = set()
 
-    for ibedge in range(0, len(self.boundaryEdges):
+    for ibedge in range(len(self.boundaryEdges)):
+
       # iterate over the convex hull (boundary) edges 
 
       boundEdge = self.boundaryEdges[ibedge];
@@ -147,6 +148,7 @@ class Delaunay2d:
       # the point is to the right of the boundary, which is
       # assumed to go counterclockwise.
       if self.isEdgeVisible(ipoint, boundEdge):
+
         # add new triangle
         newT = [boundEdge[0], ipoint, boundEdge[1]]
         self.triangles.append(newT)
@@ -172,9 +174,9 @@ class Delaunay2d:
         self.edge2Triangles[e2] = newTriangleVectPair
 
     # remove the old boundary edges
-    for i in range(len(edgeIndicesToRemove) - 1), -1, -1):
+    for i in range(len(edgeIndicesToRemove) - 1, -1, -1):
       ie = edgeIndicesToRemove[i];
-      del self.boundaryEdges[self.boundaryEdges[ie]
+      del self.boundaryEdges[self.boundaryEdges[ie]]
 
     # add the new boundary edges (i, j), but only if (j, i) is 
     # not in the list. If both (i, j) and (j, i) are in the list
@@ -228,8 +230,8 @@ def _flipEdge(self, bedge):
     xya, xyb, xyc, xyd = self.xyPoints[pa], self.xyPoints[pb], self.xyPoints[pc], self.xyPoints[pd]
 
     # the 2 angles opposite to bedge
-    crossProd1 = 2.0*self.getArea(pc, pa, pb)
-    crossProd2 = 2.0*self.getArea(pd, pb, pa)
+    crossProd1 = 2.0*self._getArea(pc, pa, pb)
+    crossProd2 = 2.0*self._getArea(pd, pb, pa)
     dotProd1 = (xya[0]-xyc[0])*(xyb[0]-xyc[0]) + (xya[1]-xyc[1])*(xyb[1]-xyc[1])
     dotProd2 = (xyb[0]-xyd[0])*(xya[0]-xyd[0]) + (xyb[1]-xyd[1])*(xya[1]-xyd[1])
     angle1 = abs(math.atan2(crossProd1, dotProd1))
@@ -293,7 +295,7 @@ def _flipEdge(self, bedge):
         otherEdgeIt[index] = t2
       elif complOtherEdgeIt != None:
         index = 0
-        if (len(complOtherEdgeIt) and complOtherEdgeIt[1] == t1:
+        if len(complOtherEdgeIt) > 1 and complOtherEdgeIt[1] == t1:
           index = 1
         complOtherEdgeIt[index] = t2
 
@@ -306,7 +308,9 @@ def _flipEdge(self, bedge):
 
 ######################################################
 
-def test():
-  
+def testOneTriangle():
+  xyPoints = [numpy.array([0., 0.]), numpy.array([1., 0.]), numpy.array([0., 1.])]
+  delaunay = Delaunay2d(xyPoints)
 
-if __name__ == '__main__': test()
+if __name__ == '__main__': 
+  testOneTriangle()
