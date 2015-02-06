@@ -327,6 +327,21 @@ def testOneTriangle():
   print 'triangles: ', delaunay.getTriangles()
   print 'edges: ', delaunay.getEdges()
 
+def testOneTriangle2():
+  # points go clockwise
+  xyPoints = [numpy.array([0., 0.]), numpy.array([0., 1.]), numpy.array([1., 0.])]
+  delaunay = Delaunay2d(xyPoints)
+  print 'triangles: ', delaunay.getTriangles()
+  print 'edges: ', delaunay.getEdges()
+
+def testTwoTriangles():
+  xyPoints = [numpy.array([0., 0.]), numpy.array([1., 0.]), numpy.array([0., 1.]), numpy.array([1., 1.])]
+  delaunay = Delaunay2d(xyPoints)
+  print 'triangles: ', delaunay.getTriangles()
+  print 'edges: ', delaunay.getEdges()
+
 
 if __name__ == '__main__': 
   testOneTriangle()
+  testOneTriangle2()
+  testTwoTriangles()
