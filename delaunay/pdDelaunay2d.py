@@ -28,20 +28,76 @@ class Delaunay2d:
     self.boundaryEdges = []
 
     # map from edge 2-tuples to triangle 3-tuples
-    edges2Triangles = {}
+    self.edge2Triangles = {}
 
     # not currently used
     self.edges = edges
     self.holes = holes
 
+    self.triangulate()
+
+  def _flipAll(self):
+    # flip edges until there are no more edges to flip
+    flipped = True
+    while flipped: 
+      flipped = False
+      # copy edge keys so we can iterate over them
+      allEdges = self.edge2Triangles.keys()[:]
+      for edge in allEdges:
+        flipped |= self._flipEdge(edge)
+
 	def triangulate(self):
-    pass
+    npoints = len(self.xyPoints)
+    if npoints < 3: 
+      # need at least 3 points
+      return
+    # compute center of gravity
+    centerOfGravity = numpy.array([0., 0.])
+    for xy in self.xyPoints:
+      centerOfGravity += xy
+    centerOfGravity /= len(self.xyPoints)
+
+    # sort the point by increasing distance form the center of gravity
+    def distanceSquare(xy):
+      d = xy - centerOfGravity
+      return numpy.dot(d, d)
+    sort(self.xyPoints, distanceSquare)
+
+    # first triangle must be non-degenerate, ie the points
+    # cannot fall onto a line. 
+    t = numpy.array([0, 1, 2])
+    formedFirstTriangle = False
+    while not formedFirstTriangle:
+      if abs(self.getArea(t)) > self.MIN_AREA:
+        formedFirstTriangle = True
+      else:
+        # skip point closest to the center of gravity
+        t += 1
+    if t[-1] > len(self.xyPoints) - 1:
+      # could not construct a valid triangle
+      return
+    self._makeCounterClockwise(t)
+    # edges of the first triangle
+    e01 = (t[0], t[1])
+    e12 = (t[1], t[2])
+    e20 = (t[2], t[3])
+    self.boundaryEdges += [e01, e12, e20]
+    self.edge2Triangles[e01] = t
+    self.edge2Triangles[e12] = t
+    self.edge2Triangles[e20] = t
+
+    # add the remaining points
+    for ipoint in range(t[-1], len(self.xyPoints)):
+      self._addPoint(ipoint)
+
+    self._flipAll()
+
 
   def getTriangles(self):
-    pass
+    return self.triangles
 
   def getEdges(self):
-    pass
+    return self.edge2Triangles.keys()
 
   def _getArea(self, ip0, ip1, ip2):
     """
