@@ -36,6 +36,15 @@ class Delaunay2d:
 
     self.triangulate()
 
+  def _makeCounterClockwise(self, t):
+    area = self._getArea(t[0], t[1], t[2])
+    if area < -self.MIN_AREA:
+      # swap
+      t1 = t[1]
+      t2 = t[2]
+      t[1] = t2
+      t[2] = t1
+
   def _flipAll(self):
     # flip edges until there are no more edges to flip
     flipped = True
@@ -61,14 +70,16 @@ class Delaunay2d:
     def distanceSquare(xy):
       d = xy - centerOfGravity
       return numpy.dot(d, d)
-    sort(self.xyPoints, distanceSquare)
+
+    # in place sorting
+    self.xyPoints.sort(key=distanceSquare)
 
     # first triangle must be non-degenerate, ie the points
     # cannot fall onto a line. 
     t = numpy.array([0, 1, 2])
     formedFirstTriangle = False
     while not formedFirstTriangle:
-      if abs(self._getArea(t)) > self.MIN_AREA:
+      if abs(self._getArea(t[0], t[1], t[2])) > self.MIN_AREA:
         formedFirstTriangle = True
       else:
         # skip point closest to the center of gravity
@@ -80,7 +91,7 @@ class Delaunay2d:
     # edges of the first triangle
     e01 = (t[0], t[1])
     e12 = (t[1], t[2])
-    e20 = (t[2], t[3])
+    e20 = (t[2], t[0])
     self.boundaryEdges += [e01, e12, e20]
     self.edge2Triangles[e01] = t
     self.edge2Triangles[e12] = t
@@ -106,8 +117,8 @@ class Delaunay2d:
     @param ip1 index of second vertex
     @param ip2 index of third vertex
     """
-    d1 = self.points[ip1] - self.points[ip0]
-    d2 = self.points[ip2] - self.points[ip0]
+    d1 = self.xyPoints[ip1] - self.xyPoints[ip0]
+    d2 = self.xyPoints[ip2] - self.xyPoints[ip0]
     return 0.5 * 0.5*(d1[0]*d2[1] - d1[1]*d2[0])
 
   def _isEdgeVisible(self, ip, edge):
@@ -123,10 +134,10 @@ class Delaunay2d:
       return True
     return False
 
-  def _addPoint(self, ip):
+  def _addPoint(self, ipoint):
     """
     Add point
-    @param ip point index
+    @param ipoint point index
     """
     # For each point we determine which 
     # boundary edges are visible to the 
@@ -147,7 +158,7 @@ class Delaunay2d:
       # an edge is visible from the new point "ipoint" iff
       # the point is to the right of the boundary, which is
       # assumed to go counterclockwise.
-      if self.isEdgeVisible(ipoint, boundEdge):
+      if self._isEdgeVisible(ipoint, boundEdge):
 
         # add new triangle
         newT = [boundEdge[0], ipoint, boundEdge[1]]
@@ -305,6 +316,7 @@ def _flipEdge(self, bedge):
       return True
     
     return False
+
 
 ######################################################
 
