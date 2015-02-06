@@ -34,7 +34,7 @@ class Delaunay2d:
     self.edges = edges
     self.holes = holes
 
-    self.triangulate()
+    self._triangulate()
 
   def _makeCounterClockwise(self, t):
     area = self._getArea(t[0], t[1], t[2])
@@ -166,7 +166,7 @@ class Delaunay2d:
       for edge in allEdges:
         flipped |= self._flipEdge(edge)
 
-  def triangulate(self):
+  def _triangulate(self):
     npoints = len(self.xyPoints)
     if npoints < 3: 
       # need at least 3 points
@@ -186,19 +186,23 @@ class Delaunay2d:
     self.xyPoints.sort(key=distanceSquare)
 
     # first triangle must be non-degenerate, ie the points
-    # cannot fall onto a line. 
-    t = numpy.array([0, 1, 2])
+    # cannot be on a line
+    t = [0, 1, 2]
     formedFirstTriangle = False
     while not formedFirstTriangle:
       if abs(self._getArea(t[0], t[1], t[2])) > self.MIN_AREA:
         formedFirstTriangle = True
       else:
         # skip point closest to the center of gravity
-        t += 1
+        t = [i + 1 for i in t]
     if t[-1] > len(self.xyPoints) - 1:
       # could not construct a valid triangle
       return
     self._makeCounterClockwise(t)
+
+    # add triangle
+    self.triangles.append(t)
+
     # edges of the first triangle
     e01 = (t[0], t[1])
     e12 = (t[1], t[2])
@@ -209,7 +213,7 @@ class Delaunay2d:
     self.edge2Triangles[e20] = [t,]
 
     # add the remaining points
-    for ipoint in range(t[-1], len(self.xyPoints)):
+    for ipoint in range(3, len(self.xyPoints)):
       self._addPoint(ipoint)
 
     self._flipAll()
@@ -279,9 +283,7 @@ class Delaunay2d:
         edgeIndicesToRemove.append(ibedge)
 
         # update the edge to triangles map
-        it = self.edge2Triangles[boundEdge]
-        itriangle = len(self.triangles) - 1
-        it.append(itriangle)
+        self.edge2Triangles[boundEdge].append(newT)
 
         # cache the new boundary edges
         e1 = (newT[0], newT[1])
@@ -322,6 +324,9 @@ class Delaunay2d:
 def testOneTriangle():
   xyPoints = [numpy.array([0., 0.]), numpy.array([1., 0.]), numpy.array([0., 1.])]
   delaunay = Delaunay2d(xyPoints)
+  print 'triangles: ', delaunay.getTriangles()
+  print 'edges: ', delaunay.getEdges()
+
 
 if __name__ == '__main__': 
   testOneTriangle()
