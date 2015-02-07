@@ -47,16 +47,24 @@ class Delaunay2d:
       self.makeCounterClockwise(tri)
       self.triangles.append(tri)
       # boundary edges
-      e01 = (0, 1)
+      e01 = (tri[0], tri[1])
       self.boundaryEdges.add(e01)
-      e12 = (1, 2)
+      e12 = (tri[1], tri[2])
       self.boundaryEdges.add(e12)
-      e20 = (2, 0)
+      e20 = (tri[2], tri[0])
       self.boundaryEdges.add(e20)
+      e01 = list(e01)
+      e01.sort()
+      e01 = tuple(e01)
       self.edge2Triangles[e01] = [0,]
+      e12 = list(e12)
+      e12.sort()
+      e12 = tuple(e12)
       self.edge2Triangles[e12] = [0,]
-      e02 = (0, 2)
-      self.edge2Triangles[e02] = [0,]
+      e20 = list(e20)
+      e20.sort()
+      e20 = tuple(e20)
+      self.edge2Triangles[e20] = [0,]
 
     else:
       # all the points fall on a line
@@ -151,7 +159,9 @@ class Delaunay2d:
         self.triangles[iTri1] = newTri1
         self.triangles[iTri2] = newTri2
         edgesToRemove.append(edge)
-        e = tuple([iOpposite1, iOpposite2].sort())
+        e = [iOpposite1, iOpposite2]
+        e.sort()
+        e = tuple(e)
         edgesToAdd[e] = [newTri1, newTri2]
         res = True
       # remove edges
@@ -204,6 +214,29 @@ class Delaunay2d:
     while flipped:
       flipped = self.flipEdges()
 
+  def show(self, width=500, height=300):
+
+    import Tkinter
+
+    xmin = min([p[0] for p in self.points])
+    ymin = min([p[1] for p in self.points])
+    xmax = max([p[0] for p in self.points])
+    ymax = max([p[1] for p in self.points])
+    w = width - 2
+    h = height - 2
+
+    master = Tkinter.Tk()
+    c = Tkinter.Canvas(master, width=width, height=height)
+    c.pack()
+    for e in self.edge2Triangles:
+      i1, i2 = e
+      xp1 = 1 + int(w*(self.points[i1][0] - xmin)/(xmax - xmin))
+      yp1 = 1 + int(h*(ymax - self.points[i1][1])/(ymax - ymin))
+      xp2 = 1 + int(w*(self.points[i2][0] - xmin)/(xmax - xmin))
+      yp2 = 1 + int(h*(ymax - self.points[i2][1])/(ymax - ymin))
+      c.create_line(xp1, yp1, xp2, yp2)
+    Tkinter.mainloop()
+
 #############################################################################
 
 def testOneTriangle():
@@ -224,12 +257,20 @@ def testTwoTriangles():
   delaunay = Delaunay2d(xyPoints)
   print 'triangles: ', delaunay.getTriangles()
   print 'edges: ', delaunay.getEdges()
+  #delaunay.show()
 
+def testRandomTriangles():
+  import random
+  random.seed(1234)
+  xyPoints = [numpy.array([random.random(), random.random()]) for i in range(4)]
+  delaunay = Delaunay2d(xyPoints)
+  delaunay.show()
 
 if __name__ == '__main__': 
   #testOneTriangle()
   #testOneTriangle2()
-  testTwoTriangles()
+  #testTwoTriangles()
+  testRandomTriangles()
 
 
 
