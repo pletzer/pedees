@@ -122,68 +122,101 @@ class Delaunay2d:
       # swap
       ips[1], ips[2] = ip2, ip1
 
+  def flipOneEdge(self, edge):
+    """
+    Flip one edge then update the data structures
+    @return True if the edge was flipped, False otherwise
+    """
+
+    # assume edge is sorted
+    tris = self.edge2Triangles[edge]
+    if len(tris) < 2:
+        return False
+
+    iTri1, iTri2 = tris
+    tri1 = self.triangles[iTri1]
+    tri2 = self.triangles[iTri2]
+
+    # find the opposite vertices, not part of the edge
+    iOpposite1 = -1
+    iOpposite2 = -1
+    for i in range(3):
+      if not tri1[i] in edge:
+        iOpposite1 = tri1[i]
+      if not tri2[i] in edge:
+        iOpposite2 = tri2[i]
+
+    # compute the 2 angles at the opposite vertices
+    da1 = self.points[edge[0]] - self.points[iOpposite1]
+    db1 = self.points[edge[1]] - self.points[iOpposite1]
+    da2 = self.points[edge[0]] - self.points[iOpposite2]
+    db2 = self.points[edge[1]] - self.points[iOpposite2]
+    crossProd1 = self.getArea(iOpposite1, edge[0], edge[1])
+    crossProd2 = self.getArea(iOpposite2, edge[1], edge[0])
+    dotProd1 = numpy.dot(da1, db1)
+    dotProd2 = numpy.dot(da2, db2)
+    angle1 = abs(math.atan2(crossProd1, dotProd1))
+    angle2 = abs(math.atan2(crossProd2, dotProd2))
+    
+    # apply Delaunay's criterion for flipping the edge
+    if angle1 + angle2 > math.pi*(1.0 + self.EPS):
+
+      # flip the triangles
+      #             / ^ \                    / b \
+      # iOpposite1 + a|b + iOpposite2  =>   + - > +
+      #             \   /                    \ a /
+
+      newTri1 = [iOpposite1, edge[0], iOpposite2] # triangle a
+      newTri2 = [iOpposite1, iOpposite2, edge[1]] # triangle b
+
+      # update the triangle data structure
+      self.triangles[iTri1] = newTri1
+      self.triangles[iTri2] = newTri2
+
+      # now handle the topolgy of the edges
+
+      # remove this edge
+      del self.edge2Triangles[edge]
+
+      # add new edge
+      e = [iOpposite1, iOpposite2]
+      e.sort()
+      e = tuple(e)
+      self.edge2Triangles[e] = [iTri1, iTri2]
+
+      # modify two edge entries
+      e = [iOpposite1, edge[1]]
+      e.sort()
+      e = tuple(e)
+      v = self.edge2Triangles[e]
+      for i in range(len(v)):
+        if v[i] == iTri1:
+          v[i] = iTri2
+          
+      e = [iOpposite2, edge[0]]
+      e.sort()
+      e = tuple(e)
+      v = self.edge2Triangles[e]
+      for i in range(len(v)):
+        if v[i] == iTri2:
+          v[i] = iTri1
+
+      return True
+
+    return False   
+
   def flipEdges(self):
     """
     Flip edges to statisfy Delaunay's criterion
     """
-    res = False
-    #return res # DEBUG
 
-    edgesToRemove = []
-    edgesToAdd = {}
-
-    for edge, tris in self.edge2Triangles.items():
-      if len(tris) < 2:
-        continue
-      iTri1, iTri2 = tris
-      tri1 = self.triangles[iTri1]
-      tri2 = self.triangles[iTri2]
-      iOpposite1 = -1
-      iOpposite2 = -1
-      for i in range(3):
-        if not tri1[i] in edge:
-          iOpposite1 = tri1[i]
-        if not tri2[i] in edge:
-          iOpposite2 = tri2[i]
-      da1 = self.points[edge[0]] - self.points[iOpposite1]
-      db1 = self.points[edge[1]] - self.points[iOpposite1]
-      da2 = self.points[edge[0]] - self.points[iOpposite2]
-      db2 = self.points[edge[1]] - self.points[iOpposite2]
-      crossProd1 = self.getArea(iOpposite1, edge[0], edge[1])
-      crossProd2 = self.getArea(iOpposite2, edge[1], edge[0])
-      dotProd1 = numpy.dot(da1, db1)
-      dotProd2 = numpy.dot(da2, db2)
-      angle1 = abs(math.atan2(crossProd1, dotProd1))
-      angle2 = abs(math.atan2(crossProd2, dotProd2))
-      if angle1 + angle2 > math.pi*(1.0 + self.EPS):
-        # flip the triangles
-        #             / ^ \                    / b \
-        # iOpposite1 + a|b + iOpposite2  =>   + - > +
-        #             \   /                    \ a /
-
-        newTri1 = [iOpposite1, edge[0], iOpposite2]
-        newTri2 = [iOpposite1, iOpposite2, edge[1]]
-        self.triangles[iTri1] = newTri1
-        self.triangles[iTri2] = newTri2
-        edgesToRemove.append(edge)
-        e = [iOpposite1, iOpposite2]
-        e.sort()
-        e = tuple(e)
-        edgesToAdd[e] = [iTri1, iTri2]
-        res = True
-      
-    # remove edges
-    for j in range(len(edgesToRemove) - 1, -1, 1):
-      e = edgesToRemove[j]
-      del self.edge2Triangles[e]
-      del edgesToRemove[j]
-
-    # add edges
-    for e, tris in edgesToAdd.items():
-      self.edge2Triangles[e] = tris
-      del edgesToAdd[e]
-
-    return res
+    flipped = True
+    while flipped:
+      allEdges = copy.copy(self.edge2Triangles.keys())
+      thisFlip = False
+      for edge in allEdges:
+        thisFlip |= self.flipOneEdge(edge)
+      flipped &= thisFlip
 
   def addPoint(self, ip):
     """
