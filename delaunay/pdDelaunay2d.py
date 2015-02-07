@@ -8,14 +8,16 @@ class Delaunay2d:
 
   EPS = 1.23456789e-14
 
-  def __init__(self, points, boundaryEdges=None, holes=None):
+  def __init__(self, points):
 
     # data structures
     self.points = points[:] # copy
     self.triangles = [] # cells
     self.edge2Triangles = {} # edge to triangle(s) map
     self.boundaryEdges = set()
-    self.holes = holes
+    self.appliedBoundaryEdges = None
+    self.holes = None
+
     
     # compute center of gravity
     cg = numpy.zeros((2,), numpy.float64)
@@ -68,9 +70,15 @@ class Delaunay2d:
     # TO DO 
 
   def getTriangles(self):
+    """
+    @return triangles
+    """
     return self.triangles
 
   def getEdges(self):
+    """
+    @return egdes
+    """
     return self.edge2Triangles.keys()
 
   def getArea(self, ip0, ip1, ip2):
@@ -97,6 +105,9 @@ class Delaunay2d:
     return False
 
   def makeCounterClockwise(self, ips):
+    """
+    Re-order nodes to ensure positive area (in-place operation)
+    """
     area = self.getArea(ips[0], ips[1], ips[2])
     if area < -self.EPS:
       ip1, ip2 = ips[1], ips[2]
@@ -104,6 +115,9 @@ class Delaunay2d:
       ips[1], ips[2] = ip2, ip1
 
   def flipEdges(self):
+    """
+    Flip edges to statisfy Delaunay's criterion
+    """
     res = False
     edgesToRemove = []
     edgesToAdd = {}
@@ -149,6 +163,10 @@ class Delaunay2d:
     return res
 
   def addPoint(self, ip):
+    """
+    Add point
+    @param ip point index
+    """
 
     for edge in copy.copy(self.boundaryEdges):
 
