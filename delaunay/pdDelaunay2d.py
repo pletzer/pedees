@@ -127,10 +127,11 @@ class Delaunay2d:
     Flip edges to statisfy Delaunay's criterion
     """
     res = False
-    return res # DEBUG
+    #return res # DEBUG
 
     edgesToRemove = []
     edgesToAdd = {}
+
     for edge, tris in self.edge2Triangles.items():
       if len(tris) < 2:
         continue
@@ -156,6 +157,10 @@ class Delaunay2d:
       angle2 = abs(math.atan2(crossProd2, dotProd2))
       if angle1 + angle2 > math.pi*(1.0 + self.EPS):
         # flip the triangles
+        #             / ^ \                    / b \
+        # iOpposite1 + a|b + iOpposite2  =>   + - > +
+        #             \   /                    \ a /
+
         newTri1 = [iOpposite1, edge[0], iOpposite2]
         newTri2 = [iOpposite1, iOpposite2, edge[1]]
         self.triangles[iTri1] = newTri1
@@ -167,16 +172,16 @@ class Delaunay2d:
         edgesToAdd[e] = [iTri1, iTri2]
         res = True
       
-      # remove edges
-      for j in range(len(edgesToRemove) - 1, -1, 1):
-        e = edgesToRemove[j]
-        del self.edge2Triangles[e]
-        del edgesToRemove[j]
+    # remove edges
+    for j in range(len(edgesToRemove) - 1, -1, 1):
+      e = edgesToRemove[j]
+      del self.edge2Triangles[e]
+      del edgesToRemove[j]
 
-      # add edges
-      for e, tris in edgesToAdd.items():
-        self.edge2Triangles[e] = tris
-        del edgesToAdd[e]
+    # add edges
+    for e, tris in edgesToAdd.items():
+      self.edge2Triangles[e] = tris
+      del edgesToAdd[e]
 
     return res
 
