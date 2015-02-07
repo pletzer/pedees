@@ -70,9 +70,11 @@ class Delaunay2d:
       # all the points fall on a line
       return
 
+    print '.... after 1st tri: ', self.triangles, self.edge2Triangles, self.boundaryEdges
     # add additional points
     for i in range(3, len(self.points)):
       self.addPoint(i)
+      print '.... after adding point i = ', i, self.triangles, self.edge2Triangles, self.boundaryEdges
 
     # remove all triangles inside holes
     # TO DO 
@@ -108,6 +110,8 @@ class Delaunay2d:
     @return True if visible    
     """
     area = self.getArea(ip, edge[0], edge[1])
+    print '??????? ', ip, edge[0], edge[1], ' area = ', area
+    print '??????? points: ', self.points[ip], self.points[edge[0]], self.points[edge[1]]
     if area < self.EPS:
       return True
     return False
@@ -127,8 +131,11 @@ class Delaunay2d:
     Flip edges to statisfy Delaunay's criterion
     """
     res = False
+    return res # DEBUG
+
     edgesToRemove = []
     edgesToAdd = {}
+    print '*** self.edge2Triangles = ', self.edge2Triangles
     for edge, tris in self.edge2Triangles.items():
       if len(tris) < 2:
         continue
@@ -162,14 +169,22 @@ class Delaunay2d:
         e = [iOpposite1, iOpposite2]
         e.sort()
         e = tuple(e)
-        edgesToAdd[e] = [newTri1, newTri2]
+        edgesToAdd[e] = [iTri1, iTri2]
         res = True
+      
       # remove edges
-      for e in edgesToRemove:
+      print '---- edges to remove = ', edgesToRemove
+      for j in range(len(edgesToRemove) - 1, -1, 1):
+        e = edgesToRemove[j]
+        print '---- removing ', e
         del self.edge2Triangles[e]
+        del edgesToRemove[j]
+
       # add edges
       for e, tris in edgesToAdd.items():
         self.edge2Triangles[e] = tris
+        del edgesToAdd[e]
+
     return res
 
   def addPoint(self, ip):
@@ -178,9 +193,15 @@ class Delaunay2d:
     @param ip point index
     """
 
-    for edge in copy.copy(self.boundaryEdges):
+    # collection for later updates
+    boundaryEdgesToRemove = set()
+    boundaryEdgesToAdd = set()
+
+    for edge in self.boundaryEdges:
 
       if self.isEdgeVisible(ip, edge):
+
+        print '>>>>>>>> point ', ip, ' sees ', edge
 
         # create new triangle
         newTri = [edge[0], edge[1], ip]
@@ -201,13 +222,30 @@ class Delaunay2d:
         e2 = [edge[1], ip]
         e2.sort()
         e2 = tuple(e2)
-        self.edge2Triangles[e1] = [iTri,]
-        self.edge2Triangles[e2] = [iTri,]
+        v1 = self.edge2Triangles.get(e1, [])
+        v1.append(iTri)
+        v2 = self.edge2Triangles.get(e2, [])
+        v2.append(iTri)
+        self.edge2Triangles[e1] = v1
+        self.edge2Triangles[e2] = v2
 
-        # update the boundary edges
-        self.boundaryEdges.remove(edge)
-        self.boundaryEdges.add(e1)
-        self.boundaryEdges.add(e2)
+        # keep track of the boundary edges to update
+        boundaryEdgesToRemove.add(edge)
+        boundaryEdgesToAdd.add(e1)
+        boundaryEdgesToAdd.add(e2)
+
+    # update the boundary edges
+    for bedge in boundaryEdgesToRemove:
+      self.boundaryEdges.remove(bedge)
+    for bedge in boundaryEdgesToAdd:
+      complBEdge = list(bedge)
+      complBEdge.reverse()
+      complBEdge = tuple(complBEdge)
+      if complBEdge not in boundaryEdgesToAdd:
+        # only add boundary edge if it does not appear
+        # twice in different order
+        self.boundaryEdges.add(bedge)
+
 
     # recursively flip edges
     flipped = True
@@ -262,8 +300,11 @@ def testTwoTriangles():
 def testRandomTriangles():
   import random
   random.seed(1234)
-  xyPoints = [numpy.array([random.random(), random.random()]) for i in range(4)]
+  xyPoints = [numpy.array([random.random(), random.random()]) for i in range(5)]
   delaunay = Delaunay2d(xyPoints)
+  print '*** points: ', delaunay.points
+  print delaunay.edge2Triangles
+  print delaunay.boundaryEdges
   delaunay.show()
 
 if __name__ == '__main__': 
