@@ -70,11 +70,9 @@ class Delaunay2d:
       # all the points fall on a line
       return
 
-    print '.... after 1st tri: ', self.triangles, self.edge2Triangles, self.boundaryEdges
     # add additional points
     for i in range(3, len(self.points)):
       self.addPoint(i)
-      print '.... after adding point i = ', i, self.triangles, self.edge2Triangles, self.boundaryEdges
 
     # remove all triangles inside holes
     # TO DO 
@@ -110,8 +108,6 @@ class Delaunay2d:
     @return True if visible    
     """
     area = self.getArea(ip, edge[0], edge[1])
-    print '??????? ', ip, edge[0], edge[1], ' area = ', area
-    print '??????? points: ', self.points[ip], self.points[edge[0]], self.points[edge[1]]
     if area < self.EPS:
       return True
     return False
@@ -135,7 +131,6 @@ class Delaunay2d:
 
     edgesToRemove = []
     edgesToAdd = {}
-    print '*** self.edge2Triangles = ', self.edge2Triangles
     for edge, tris in self.edge2Triangles.items():
       if len(tris) < 2:
         continue
@@ -173,10 +168,8 @@ class Delaunay2d:
         res = True
       
       # remove edges
-      print '---- edges to remove = ', edgesToRemove
       for j in range(len(edgesToRemove) - 1, -1, 1):
         e = edgesToRemove[j]
-        print '---- removing ', e
         del self.edge2Triangles[e]
         del edgesToRemove[j]
 
@@ -200,8 +193,6 @@ class Delaunay2d:
     for edge in self.boundaryEdges:
 
       if self.isEdgeVisible(ip, edge):
-
-        print '>>>>>>>> point ', ip, ' sees ', edge
 
         # create new triangle
         newTri = [edge[0], edge[1], ip]
@@ -244,7 +235,6 @@ class Delaunay2d:
       if len(self.edge2Triangles[bEdgeSorted]) == 1:
         # only add boundary edge if it does not appear
         # twice in different order
-        print '>>>>>>>>>> adding boundary edge ', bedge
         self.boundaryEdges.add(bedge)
 
 
@@ -301,9 +291,8 @@ def testTwoTriangles():
 def testRandomTriangles():
   import random
   random.seed(1234)
-  xyPoints = [numpy.array([random.random(), random.random()]) for i in range(5)]
+  xyPoints = [numpy.array([random.random(), random.random()]) for i in range(10)]
   delaunay = Delaunay2d(xyPoints)
-  print '*** points: ', delaunay.points
   print delaunay.edge2Triangles
   print delaunay.boundaryEdges
   delaunay.show()
