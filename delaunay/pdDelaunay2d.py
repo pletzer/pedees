@@ -231,19 +231,20 @@ class Delaunay2d:
 
         # keep track of the boundary edges to update
         boundaryEdgesToRemove.add(edge)
-        boundaryEdgesToAdd.add(e1)
-        boundaryEdgesToAdd.add(e2)
+        boundaryEdgesToAdd.add( (edge[0], ip) )
+        boundaryEdgesToAdd.add( (ip, edge[1]) )
 
     # update the boundary edges
     for bedge in boundaryEdgesToRemove:
       self.boundaryEdges.remove(bedge)
     for bedge in boundaryEdgesToAdd:
-      complBEdge = list(bedge)
-      complBEdge.reverse()
-      complBEdge = tuple(complBEdge)
-      if complBEdge not in boundaryEdgesToAdd:
+      bEdgeSorted = list(bedge)
+      bEdgeSorted.sort()
+      bEdgeSorted = tuple(bEdgeSorted)
+      if len(self.edge2Triangles[bEdgeSorted]) == 1:
         # only add boundary edge if it does not appear
         # twice in different order
+        print '>>>>>>>>>> adding boundary edge ', bedge
         self.boundaryEdges.add(bedge)
 
 
