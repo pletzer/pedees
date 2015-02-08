@@ -46,6 +46,7 @@ class Delaunay2d:
       tri = [index, index + 1, index + 2]
       self.makeCounterClockwise(tri)
       self.triangles.append(tri)
+
       # boundary edges
       e01 = (tri[0], tri[1])
       self.boundaryEdges.add(e01)
@@ -53,17 +54,14 @@ class Delaunay2d:
       self.boundaryEdges.add(e12)
       e20 = (tri[2], tri[0])
       self.boundaryEdges.add(e20)
-      e01 = list(e01)
-      e01.sort()
-      e01 = tuple(e01)
+
+      e01 = self.makeKey(e01[0], e01[1])
       self.edge2Triangles[e01] = [0,]
-      e12 = list(e12)
-      e12.sort()
-      e12 = tuple(e12)
+
+      e12 = self.makeKey(e12[0], e12[1])
       self.edge2Triangles[e12] = [0,]
-      e20 = list(e20)
-      e20.sort()
-      e20 = tuple(e20)
+
+      e20 = self.makeKey(e20[0], e20[1])
       self.edge2Triangles[e20] = [0,]
 
     else:
@@ -183,25 +181,19 @@ class Delaunay2d:
       del self.edge2Triangles[edge]
 
       # add new edge
-      e = [iOpposite1, iOpposite2]
-      e.sort()
-      e = tuple(e)
+      e = self.makeKey(iOpposite1, iOpposite2)
       self.edge2Triangles[e] = [iTri1, iTri2]
 
       # modify two edge entries which now connect to 
       # a different triangle
-      e = [iOpposite1, edge[1]]
-      e.sort()
-      e = tuple(e)
+      e = self.makeKey(iOpposite1, edge[1])
       v = self.edge2Triangles[e]
       for i in range(len(v)):
         if v[i] == iTri1:
           v[i] = iTri2
       res.add(e)
 
-      e = [iOpposite2, edge[0]]
-      e.sort()
-      e = tuple(e)
+      e = self.makeKey(iOpposite2, edge[0])
       v = self.edge2Triangles[e]
       for i in range(len(v)):
         if v[i] == iTri2:
@@ -210,15 +202,8 @@ class Delaunay2d:
 
       # these two edges might need to be flipped at the
       # next iteration
-      e = [iOpposite1, edge[0]]
-      e.sort()
-      e = tuple(e)
-      res.add(e)
-
-      e = [iOpposite2, edge[1]]
-      e.sort()
-      e = tuple(e)
-      res.add(e)
+      res.add(self.makeKey(iOpposite1, edge[0]))
+      res.add(self.makeKey(iOpposite2, edge[1]))
 
     return res 
 
@@ -309,6 +294,14 @@ class Delaunay2d:
     flipped = True
     while flipped:
       flipped = self.flipEdges()
+
+  def makeKey(self, i1, i2):
+    """
+    Make a tuple key such at i1 < i2
+    """
+    if i1 < i2:
+      return (i1, i2)
+    return (i2, i1)
 
   def show(self, width=500, height=300):
 
