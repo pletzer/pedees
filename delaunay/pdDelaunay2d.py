@@ -125,13 +125,17 @@ class Delaunay2d:
   def flipOneEdge(self, edge):
     """
     Flip one edge then update the data structures
-    @return True if the edge was flipped, False otherwise
+    @return set of edges to interate over at next iteration
     """
 
+    # start with empty set
+    res = set()
+
     # assume edge is sorted
-    tris = self.edge2Triangles[edge]
+    tris = self.edge2Triangles.get(edge, [])
     if len(tris) < 2:
-        return False
+        # nothing to do, just return
+        return res
 
     iTri1, iTri2 = tris
     tri1 = self.triangles[iTri1]
@@ -184,7 +188,8 @@ class Delaunay2d:
       e = tuple(e)
       self.edge2Triangles[e] = [iTri1, iTri2]
 
-      # modify two edge entries
+      # modify two edge entries which now connect to 
+      # a different triangle
       e = [iOpposite1, edge[1]]
       e.sort()
       e = tuple(e)
@@ -192,6 +197,7 @@ class Delaunay2d:
       for i in range(len(v)):
         if v[i] == iTri1:
           v[i] = iTri2
+      res.add(e)
 
       e = [iOpposite2, edge[0]]
       e.sort()
@@ -200,22 +206,46 @@ class Delaunay2d:
       for i in range(len(v)):
         if v[i] == iTri2:
           v[i] = iTri1
+      res.add(e)
 
-      return True
+      # these two edges might need to be flipped at the
+      # next iteration
+      e = [iOpposite1, edge[0]]
+      e.sort()
+      e = tuple(e)
+      res.add(e)
 
-    return False   
+      e = [iOpposite2, edge[1]]
+      e.sort()
+      e = tuple(e)
+      res.add(e)
+
+    return res 
 
   def flipEdges(self):
     """
     Flip edges to statisfy Delaunay's criterion
     """
 
-    flipped = True
-    while flipped:
-      thisFlip = False
-      for edge in self.edge2Triangles.keys():
-        thisFlip |= self.flipOneEdge(edge)
-      flipped &= thisFlip
+    # start with all the edges
+    edgeSet = set(self.edge2Triangles.keys())
+
+    continueFlipping = True
+
+    while continueFlipping:
+
+      #
+      # iterate until there are no more edges to flip
+      #
+
+      # collect the edges to flip
+      newEdgeSet = set()
+      for edge in edgeSet:
+        # union
+        newEdgeSet |= self.flipOneEdge(edge)
+
+      edgeSet = copy.copy(newEdgeSet)
+      continueFlipping = (len(edgeSet) > 0)
 
   def addPoint(self, ip):
     """
@@ -328,11 +358,11 @@ def testTwoTriangles():
 def testRandomTriangles():
   import random
   random.seed(1234)
-  xyPoints = [numpy.array([random.random(), random.random()]) for i in range(10)]
+  xyPoints = [numpy.array([random.random(), random.random()]) for i in range(1000)]
   delaunay = Delaunay2d(xyPoints)
   #print delaunay.edge2Triangles
   #print delaunay.boundaryEdges
-  delaunay.show()
+  #delaunay.show()
 
 if __name__ == '__main__': 
   #testOneTriangle()
