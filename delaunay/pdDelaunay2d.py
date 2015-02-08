@@ -192,7 +192,7 @@ class Delaunay2d:
       for i in range(len(v)):
         if v[i] == iTri1:
           v[i] = iTri2
-          
+
       e = [iOpposite2, edge[0]]
       e.sort()
       e = tuple(e)
@@ -212,9 +212,8 @@ class Delaunay2d:
 
     flipped = True
     while flipped:
-      allEdges = copy.copy(self.edge2Triangles.keys())
       thisFlip = False
-      for edge in allEdges:
+      for edge in self.edge2Triangles.keys():
         thisFlip |= self.flipOneEdge(edge)
       flipped &= thisFlip
 
@@ -331,8 +330,8 @@ def testRandomTriangles():
   random.seed(1234)
   xyPoints = [numpy.array([random.random(), random.random()]) for i in range(10)]
   delaunay = Delaunay2d(xyPoints)
-  print delaunay.edge2Triangles
-  print delaunay.boundaryEdges
+  #print delaunay.edge2Triangles
+  #print delaunay.boundaryEdges
   delaunay.show()
 
 if __name__ == '__main__': 
