@@ -160,7 +160,7 @@ class Delaunay2d:
     angle1 = abs(math.atan2(crossProd1, dotProd1))
     angle2 = abs(math.atan2(crossProd2, dotProd2))
     
-    # apply Delaunay's criterion for flipping the edge
+    # Delaunay's test
     if angle1 + angle2 > math.pi*(1.0 + self.EPS):
 
       # flip the triangles
