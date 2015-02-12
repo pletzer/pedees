@@ -3,6 +3,12 @@
 class Elliptic2d:
 
 	def __init__(self, fFunc, gFunc, sFunc):
+		"""
+		Constructor
+		@param fFunc f in -div(f grad phi) + g phi = s
+		@param gFunc g in -div(f grad phi) + g phi = s
+		@param sFunc s source function
+		"""
 
 		self.fFunc = fFunc
 		self.gFunc = gFunc
@@ -12,6 +18,11 @@ class Elliptic2d:
 		self.sourceVec = []
 
 	def assemble(self, points, triangles):
+		"""
+		Assemble the stiffness matrix and the source vector
+		@param points points from the triangulation
+		@param triangles cells
+		"""
 
 		n = len(points)
 		self.sourceVec = numpy.zeros( (n,), numpy.float64 )
@@ -78,8 +89,36 @@ class Elliptic2d:
 			self.sourceVec[ib] += area*(sa/24.0 + sb/12.0 + sc/24.0)
 			self.sourceVec[ic] += area*(sa/24.0 + sb/24.0 + sc/12.0)
 
-	def applyBoundaryConditions(self, edges, aVals, bVals, cVals):
-		pass
+	def applyBoundaryConditions(self, points, edges, bVals, cVals):
+		"""
+		f d phi/dn + B phi = C
+		Default boundary conditions are zero-Neumann
+		@param points set of points from the triangulation 
+		@param edges array of edges where boundary conditions apply
+		@param bVals corresponding linear boundary condition terms
+		@param cVals corresponding source boundary condition terms
+		"""
+		for index in range(len(edges)):
+
+			edge = edges[index]
+			i1, i2 = edge
+
+			# distance between nodes
+			d = points[i2] - points[i1]
+			deltaLength = math.sqrt( numpy.dot(d, d) )
+
+			# modification of the stiffness matrix
+			diag = deltaLength * bVals[index] / 3.0
+			offDiag = deltaLength * bVals[index] / 6.0
+			self.mat[i1, i1] += diag
+			self.mat[i2, i2] += diag
+			self.mat[i1, i2] += offDiag
+			self.mat[i2, i1] += offDiag
+
+			# modification of the source term
+			sVal = deltaLength * cVals[index] / 2.0
+			self.sourceVec[i1] += sVal
+			self.sourceVec[i2] += sVal
 
 	def getStiffnessMatrix(self):
 		return self.mat
