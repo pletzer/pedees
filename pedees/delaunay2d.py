@@ -115,7 +115,7 @@ class Delaunay2d:
     @return True if visible    
     """
     area = self.getArea(ip, edge[0], edge[1])
-    if area < self.EPS:
+    if area < -self.EPS:
       return True
     return False
 
@@ -297,7 +297,6 @@ class Delaunay2d:
         # only add boundary edge if it does not appear
         # twice in different order
         self.boundaryEdges.add(bedge)
-
 
     # recursively flip edges
     flipped = True
