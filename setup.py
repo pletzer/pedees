@@ -7,5 +7,5 @@ setup(name='pedees',
       description='A simple PDE solver',
       author='Alexander Pletzer',
       author_email='alexander@gokliya.net',
-      py_modules=['pedees.delaunay2d', 'pedees.elliptic2d', 'pedees.cg'],
+      py_modules=['pedees.delaunay2d', 'pedees.elliptic2d', 'pedees.cg', 'pedees.plot'],
      )
