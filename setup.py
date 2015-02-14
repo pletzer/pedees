@@ -7,8 +7,6 @@ setup(name='pedees',
       description='A simple PDE solver',
       author='Alexander Pletzer',
       author_email='alexander@gokliya.net',
-      py_modules=['pedees.delaunay', 
-                  'pedees.fe', 
-                  'pedees.solver'],
-      #package_dir={'': '../pedees'},
+      py_modules=['pedees.solver'],
+
      )
