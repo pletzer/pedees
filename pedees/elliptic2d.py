@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+import numpy
+import math
+
 class Elliptic2d:
 
 	def __init__(self, fFunc, gFunc, sFunc):
@@ -17,20 +20,22 @@ class Elliptic2d:
 		self.mat = {}
 		self.sourceVec = []
 
-	def assemble(self, points, triangles):
+		self.triangulation = None
+
+	def assemble(self, tri):
 		"""
 		Assemble the stiffness matrix and the source vector
-		@param points points from the triangulation
-		@param triangles cells
+		@param tri triangulation 
 		"""
 
-		n = len(points)
+		self.triangulation = tri
+		n = len(tri.points)
 		self.sourceVec = numpy.zeros( (n,), numpy.float64 )
 
-		for iabc in triangles:
+		for iabc in tri.triangles:
 
 			ia, ib, ic = iabc
-			pa, pb, pc = points[ia], points[ib], points[ic]
+			pa, pb, pc = tri.points[ia], tri.points[ib], tri.points[ic]
 
 			# centroid 
 			pMid = (pa + pb + pc)/3.0
@@ -89,34 +94,30 @@ class Elliptic2d:
 			self.sourceVec[ib] += area*(sa/24.0 + sb/12.0 + sc/24.0)
 			self.sourceVec[ic] += area*(sa/24.0 + sb/24.0 + sc/12.0)
 
-	def applyBoundaryConditions(self, points, edges, bVals, cVals):
+	def applyBoundaryConditions(self, edge2Vals):
 		"""
-		f d phi/dn + B phi = C
+		f d phi/dn + b*phi = c
 		Default boundary conditions are zero-Neumann
-		@param points set of points from the triangulation 
-		@param edges array of edges where boundary conditions apply
-		@param bVals corresponding linear boundary condition terms
-		@param cVals corresponding source boundary condition terms
+		@param edge2Vals dictionary of edge to (b, c) values
 		"""
-		for index in range(len(edges)):
+		for edge, vals in edge2Vals.items():
 
-			edge = edges[index]
 			i1, i2 = edge
 
 			# distance between nodes
-			d = points[i2] - points[i1]
+			d = self.triangulation.points[i2] - self.triangulation.points[i1]
 			deltaLength = math.sqrt( numpy.dot(d, d) )
 
 			# modification of the stiffness matrix
-			diag = deltaLength * bVals[index] / 3.0
-			offDiag = deltaLength * bVals[index] / 6.0
+			diag = deltaLength * vals[0] / 3.0
+			offDiag = deltaLength * vals[0] / 6.0
 			self.mat[i1, i1] += diag
 			self.mat[i2, i2] += diag
 			self.mat[i1, i2] += offDiag
 			self.mat[i2, i1] += offDiag
 
 			# modification of the source term
-			sVal = deltaLength * cVals[index] / 2.0
+			sVal = deltaLength * vals[1] / 2.0
 			self.sourceVec[i1] += sVal
 			self.sourceVec[i2] += sVal
 

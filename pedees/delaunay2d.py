@@ -75,6 +75,12 @@ class Delaunay2d:
     # remove all triangles inside holes
     # TO DO 
 
+  def getPoints(self):
+    """
+    @return points
+    """
+    return self.points
+
   def getTriangles(self):
     """
     @return triangles
@@ -86,6 +92,9 @@ class Delaunay2d:
     @return egdes
     """
     return self.edge2Triangles.keys()
+
+  def getBoundaryEdges(self):
+    return self.boundaryEdges
 
   def getArea(self, ip0, ip1, ip2):
     """
