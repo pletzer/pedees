@@ -179,6 +179,8 @@ class Delaunay2d:
 
       newTri1 = [iOpposite1, edge[0], iOpposite2] # triangle a
       newTri2 = [iOpposite1, iOpposite2, edge[1]] # triangle b
+      self.makeCounterClockwise(newTri1)
+      self.makeCounterClockwise(newTri2)
 
       # update the triangle data structure
       self.triangles[iTri1] = newTri1
@@ -256,9 +258,7 @@ class Delaunay2d:
       if self.isEdgeVisible(ip, edge):
 
         # create new triangle
-        newTri = [edge[0], edge[1], ip]
-        newTri.sort()
-        self.makeCounterClockwise(newTri)
+        newTri = [edge[0], ip, edge[1]]
         self.triangles.append(newTri)
 
         # update the edge to triangle map

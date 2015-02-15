@@ -57,6 +57,8 @@ class Elliptic2d:
 			yba = pb[1] - pa[1]
 
 			area = -xba*yac + yba*xac
+			if area < 0:
+				print '*** area = ', area, ' for ia, ib, ic = ', ia, ib, ic
 
 			fOverA = 0.25*(fxx + fyy)/area
 

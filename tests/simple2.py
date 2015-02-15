@@ -6,7 +6,7 @@ from pedees.cg import Cg
 from pedees.plot import Plot
 import numpy
 
-nx, ny = 2, 2
+nx, ny = 3, 3
 dx, dy = 1.0/float(nx), 1.0/float(ny)
 pts = [ ]
 for i in range(nx + 1):
