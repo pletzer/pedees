@@ -7,7 +7,7 @@ class Plot:
 
 	def __init__(self, tri, width, height):
 
-		self.padding = 2
+		self.padding = 10
 		self.w = width - 2*self.padding
 		self.h = height - 2*self.padding
 
@@ -40,6 +40,7 @@ class Plot:
 		vmin, vmax = min(solution), max(solution)
 		n = len(solution)
 		points = self.triangulation.getPoints()
+
 		for cell in self.triangulation.getTriangles():
 			ia, ib, ic = cell
 			va, vb, vc = points[ia], points[ib], points[ic]
@@ -48,11 +49,17 @@ class Plot:
 			val = (solution[ia] + solution[ib] + solution[ic])/3.0
 			color = self.getRGB(val, vmin, vmax)
 			self.canvas.create_polygon(pxa, pya, pxb, pyb, pxc, pyc, fill=color)
+
 		for edge in self.triangulation.getEdges():
 			i1, i2 = edge
 			v1, v2 = points[i1], points[i2]
 			px1, px2 = self.x2Pix(v1[0]), self.x2Pix(v2[0])
 			py1, py2 = self.y2Pix(v1[1]), self.y2Pix(v2[1])
 			self.canvas.create_line(px1, py1, px2, py2, fill='black')
+
+		for i in range(len(points)):
+			v = points[i]
+			px, py = self.x2Pix(v[0]) + 5, self.y2Pix(v[1]) + 5
+			self.canvas.create_text(px, py, text=str(i))
 
 		self.master.mainloop()
