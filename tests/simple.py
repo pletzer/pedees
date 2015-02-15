@@ -1,52 +1,57 @@
 #!/usr/bin/env python
+# $Id: simple.py,v 1.3 2003/07/16 13:50:11 pletzer Exp $
+import time
 
-from pedees.delaunay2d import Delaunay2d
-from pedees.elliptic2d import Elliptic2d
-from pedees.cg import Cg
-from pedees.plot import Plot
-import numpy
+from ellipt2d import ellipt2d
+from DirichletBound import DirichletBound
+from NeumannBound import NeumannBound
+import reg2tri
+from math import sin, cos, pi
 
-pts = [numpy.array([0., 0.]), 
-       numpy.array([1., 0.]), 
-       numpy.array([1., 1.]), 
-       numpy.array([0., 1.])]
-delaunay = Delaunay2d(pts)
+"""
+Simple demo
+"""
 
-def fFunc(xy):
-	return 1.0
 
-def gFunc(xy):
-	return 0.0
+xmin, xmax, ymin, ymax = 0.0, 1.0, 0.0, 1.0
+fact = 1
+nx1, ny1 = 2, 2
+grid = reg2tri.rect2cross((xmin, ymin, xmax, ymax), nx1, ny1)
 
-def sFunc(xy):
-	return 0.0
+db = DirichletBound()
+for i in range(0, nx1):
+    db[i] = 0.0
+for i in range((ny1-1)*nx1, ny1*nx1):
+    x = grid.x(i)
+    db[i] = 1.0
 
-elliptic = Elliptic2d(fFunc, gFunc, sFunc)
-elliptic.assemble(delaunay)
+F, g, s = '1.', '0.', '0.'
+tic = time.time()
+equ = ellipt2d(grid, F, g, s)
+[amat, s] = equ.stiffnessMat()
+print ' amat = ', amat
+equ.dirichletB(db,amat,s)
+toc = time.time()
+print 'time to assemble siffness matrix %10.2f secs'%(toc-tic)
+#v0 = s; v = amat.CGsolve(v0,s,1.0e-6, len(s) )
+tic = time.time()
+#print 'time CGPython %10.2f secs'% (tic-toc)
+import superlu
+v = superlu.solve(amat, s) 
+toc = time.time()
+print 'time to solve %10.2f secs'%(toc-tic)
 
-large = 1.e6
-bcs = {}
-bedges = delaunay.getBoundaryEdges()
-for be in bedges:
-  i, j = be
-  pi = delaunay.getPoints()[i]
-  pj = delaunay.getPoints()[j]
-  if pi[0] > 0.999 and pj[0] > 0.999:
-    # Dirichlet 1
-    bcs[be] = (large, large)
-  elif pi[0] < 0.01 and pj[0] < 0.01:
-    # Dirichlet 0
-    bcs[be] = (large, 0.0)
-  # zero Neumann on all other edges (no need to specify)
-elliptic.applyBoundaryConditions(bcs)
+print 'max(v)=',max(v),' min(v)=',min(v)
 
-mat, b = elliptic.getStiffnessMatrix(), elliptic.getSourceVector()
-slvr = Cg(mat, b)
-n = len(b)
-p = numpy.array([mat[i, i] for i in range(n)])
-zeros = numpy.zeros( b.shape, numpy.float64 )
-x = slvr.solve(precond=p, x0=zeros, numIters=10, tol=1.e-10, verbose=True)
-print x
-
-pl = Plot(delaunay, width=500, height=300)
-pl.show(x)
+from tkplot import *
+root = Tk() 
+frame = Frame(root) 
+frame.pack() 
+WIDTH, HEIGHT = 300, 300 
+button = Button(frame, text="OK", fg="red", command=frame.quit) 
+button.pack(side=BOTTOM) 
+canvas = Canvas(bg="white", width=WIDTH, height=HEIGHT) 
+canvas.pack() 
+tkplot(canvas, grid, v, 0, 0, 1, WIDTH, HEIGHT) 
+tkplot(canvas, grid, db, 1, 0, 1, WIDTH, HEIGHT) 
+root.mainloop()

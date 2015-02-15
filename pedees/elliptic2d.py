@@ -58,7 +58,7 @@ class Elliptic2d:
 
 			area = -xba*yac + yba*xac
 
-			fOverA = 0.5*(fxx + fyy)/area
+			fOverA = 0.25*(fxx + fyy)/area
 
 			faa = fOverA * (ycb*ycb + xcb*xcb) \
 			      + (ga/ 20. + gb/ 60. + gc/ 60.)*area

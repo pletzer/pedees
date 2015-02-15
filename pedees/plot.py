@@ -48,5 +48,11 @@ class Plot:
 			val = (solution[ia] + solution[ib] + solution[ic])/3.0
 			color = self.getRGB(val, vmin, vmax)
 			self.canvas.create_polygon(pxa, pya, pxb, pyb, pxc, pyc, fill=color)
+		for edge in self.triangulation.getEdges():
+			i1, i2 = edge
+			v1, v2 = points[i1], points[i2]
+			px1, px2 = self.x2Pix(v1[0]), self.x2Pix(v2[0])
+			py1, py2 = self.y2Pix(v1[1]), self.y2Pix(v2[1])
+			self.canvas.create_line(px1, py1, px2, py2, fill='black')
 
 		self.master.mainloop()
