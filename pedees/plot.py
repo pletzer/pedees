@@ -7,7 +7,7 @@ class Plot:
 
 	def __init__(self, tri, width, height):
 
-		self.padding = 10
+		self.padding = 20
 		self.w = width - 2*self.padding
 		self.h = height - 2*self.padding
 
@@ -59,7 +59,10 @@ class Plot:
 
 		for i in range(len(points)):
 			v = points[i]
-			px, py = self.x2Pix(v[0]) + 5, self.y2Pix(v[1]) + 5
+			px, py = self.x2Pix(v[0]) - 5, self.y2Pix(v[1]) - 5
 			self.canvas.create_text(px, py, text=str(i))
+			px += 10
+			py += 10
+			self.canvas.create_text(px, py, text='%5.2f'%solution[i])
 
 		self.master.mainloop()

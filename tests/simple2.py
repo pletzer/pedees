@@ -29,7 +29,7 @@ def sFunc(xy):
 elliptic = Elliptic2d(fFunc, gFunc, sFunc)
 elliptic.assemble(delaunay)
 
-print 'stiffness matrix: ', elliptic.getStiffnessMatrix()
+print 'stiffness matrix before BCs: ', elliptic.getStiffnessMatrix()
 
 
 large = 1.e6
@@ -57,6 +57,7 @@ x = slvr.solve(precond=p, x0=zeros, numIters=100, tol=1.e-10, verbose=True)
 print 'solution: ', x
 print 'points: ', delaunay.getPoints()
 print 'BCs: ', bcs
+print 'solution error: ', slvr.getSolutionError(x)
 
 pl = Plot(delaunay, width=300, height=300)
 pl.show(x)

@@ -13,25 +13,23 @@ class Cg:
 
 		x = x0[:]
 		r = self.b - self.matrixDotVector(x)
-		z = r / precond
-		p = z[:]
-
-		k = 0
+		w = r / precond
+		p = numpy.zeros(x0.shape, numpy.float64)
+		beta = 0.0
+		rho = numpy.dot(r, w)
 		err = self.norm(r)
-		while k < numIters:
-			ap = self.matrixDotVector(p)
-			alpha = numpy.dot(r, z) / numpy.dot(p,  ap)
-			x += alpha * p
-			rOld = r[:]
-			r -= alpha * ap
-			err = self.norm(r)
-
-			if err < tol:
-				break
-
-			z = r / precond
-			beta = numpy.dot(z, r)/numpy.dot(z, rOld)
-			p = z + beta*p
+		k = 0
+		while abs(err) > tol and k < numIters:
+			p = w + beta*p
+			z = self.matrixDotVector(p)
+			alpha = rho / numpy.dot(p,  z)
+			r -= alpha*z
+			w = r/precond
+			rhoOld = rho
+			rho = numpy.dot(r, w)
+			x += alpha*p
+			beta = rho/rhoOld
+			err = self.norm( self.b - self.matrixDotVector(x) )
 			k += 1
 
 		return x
@@ -45,6 +43,9 @@ class Cg:
 
 	def norm(self, v):
 		return math.sqrt( numpy.dot(v, v) )
+
+	def getSolutionError(self, vec):
+		return self.norm( self.b - self.matrixDotVector(vec) )
 
 ###############################################################################
 def test1():
