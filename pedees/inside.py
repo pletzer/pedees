@@ -29,9 +29,9 @@ class Inside:
 
   def computeIntersection(self, point, face, direction):
     self.mat[:, 0] = direction
-    self.b = face[0] - point
+    self.b = self.points[face[0]] - point
     for i in range(self.ndims - 1):
-      self.mat[:, 1 + i] = face[0] - face[1 + i]
+      self.mat[:, 1 + i] = self.points[face[0]] - self.points[face[1 + i]]
     solution = numpy.linalg.solve(self.mat, self.b)
     print '*** point = ', point
     print '*** face = ', face
@@ -54,7 +54,8 @@ class Inside:
       lmbda, xis = self.computeIntersection(point, face, direction)
       if lmbda > 0.0 + self.eps:
         # the direction is right
-        sums = [ reduce(lambda x, y: x+y, xis[:i], 0.) for i in range(len(xis)) ]
+        print '>>>> lmbda = ', lmbda
+        sums = numpy.cumsum(xis)
         isInside = reduce(lambda x, y: x and y, 
           [xis[i] > 0.0 + self.eps and xis[i] < 1.0 - sums[i] - self.eps \
           for i in range(len(xis))])
@@ -71,8 +72,19 @@ def test2d_1():
             numpy.array([0., 1.])]
   faces = [(0, 1), (1, 2), (2, 0)]
   inside = Inside(points, faces)
+
+  # really outside
   assert(inside.isInside(numpy.array([-0.1, -0.2])) == False)
+
+  # inside
   assert(inside.isInside(numpy.array([+0.1, +0.2])) == True)
+
+  # outside
+  assert(inside.isInside(numpy.array([-0.1, +0.2])) == False)
+  assert(inside.isInside(numpy.array([+0.1, -0.2])) == False)
+
+  # on the face
+  assert(inside.isInside(numpy.array([0.0, +0.2])) == False)
 
 if __name__ == '__main__':
   test2d_1()
