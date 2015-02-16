@@ -25,7 +25,7 @@ class Inside:
       xmax = max([p[i] for p in points])
       self.xmins[i] = min(self.xmins[i], xmin)
       self.xmaxs[i] = max(self.xmaxs[i], xmax)
-
+    print '>>> xmins, xmaxs = ', self.xmins, self.xmaxs
 
   def computeIntersection(self, point, face, direction):
     self.mat[:, 0] = direction
@@ -33,16 +33,18 @@ class Inside:
     for i in range(self.ndims - 1):
       self.mat[:, 1 + i] = face[0] - face[1 + i]
     solution = numpy.linalg.solve(self.mat, self.b)
+    print '*** point = ', point
+    print '*** face = ', face
+    print '*** solution = ', solution
     return solution[0], solution[1:]
 
   def isInside(self, point):
 
-    insideBox = reduce(lambda x,y: x or y, 
-      [(point[i] < self.xmins[i] - self.eps) or (point[i] > self.maxs[i] + self.eps) 
+    outsideBox = reduce(lambda x,y: x or y, 
+      [(point[i] < self.xmins[i] - self.eps) or (point[i] > self.xmaxs[i] + self.eps) 
       for i in range(self.ndims)])
 
-    # cannot be inside
-    if not insideBox:
+    if outsideBox:
       return False
 
     # direction is towards the high end box corner
@@ -70,6 +72,7 @@ def test2d_1():
   faces = [(0, 1), (1, 2), (2, 0)]
   inside = Inside(points, faces)
   assert(inside.isInside(numpy.array([-0.1, -0.2])) == False)
+  assert(inside.isInside(numpy.array([+0.1, +0.2])) == True)
 
 if __name__ == '__main__':
   test2d_1()
