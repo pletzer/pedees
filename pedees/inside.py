@@ -26,13 +26,15 @@ class Inside:
       self.xmins[i] = min(self.xmins[i], xmin)
       self.xmaxs[i] = max(self.xmaxs[i], xmax)
 
-  def isPointRoughlyInFaceBox(self, point, face):
+  def areBoxesOverlapping(self, point, direction, face):
     for i in range(self.ndims):
-      xmin = min( [self.points[j][i] for j in face] )
-      if point[i] < xmin - self.eps:
-        return False
-      xmax = max( [self.points[j][i] for j in face] )
-      if point[i] > xmax + self.eps:
+      xminFace = min( [self.points[j][i] for j in face] )
+      xminRay = min(point[i], point[i] + direction[i])
+      xmaxFace = max( [self.points[j][i] for j in face] )
+      xmaxRay = max(point[i], point[i] + direction[i])
+      if (xmaxRay < xminFace + self.eps) or \
+         (xmaxFace < xminRay + self.eps):
+         # no overlap
         return False
     return True
 
@@ -59,12 +61,12 @@ class Inside:
     numberOfIntersections = 0
     for face in self.faces:
 
-      if not self.isPointRoughlyInFaceBox(point, face):
+      if not self.areBoxesOverlapping(point, direction, face):
         continue
 
       lmbda, xis = self.computeIntersection(point, face, direction)
       if lmbda > 0.0 + self.eps:
-        # the direction is right
+        # the direction is ok
         sums = numpy.cumsum(xis)
         isInside = reduce(lambda x, y: x and y, 
           [xis[i] > 0.0 + self.eps and xis[i] < 1.0 - sums[i] - self.eps \
