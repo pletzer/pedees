@@ -3,11 +3,82 @@
 from wsgiref.simple_server import make_server
 import cgi
 from math import cos, sin, tan, atan, atan2, pi, log, exp, e
+import numpy
+import random
+
+class Elliptic2d:
+  def __init__(self, fFunc, gFunc, sFunc, xFunc, yFunc, bcs):
+
+    random.seed(12345)
+
+    # generate boundary contour
+    self.boundPoints = []
+    n = 40
+    dt = 1.0/float(n)
+    for i in range(n):
+      t = dt*i
+      x, y = eval(xFunc), eval(yFunc)
+      self.boundPoints.append( numpy.array([x, y]) )
+
+    # box min/max points
+    self.xmin = min([p[0] for p in self.boundPoints])
+    self.ymin = min([p[1] for p in self.boundPoints])
+    self.xmax = max([p[0] for p in self.boundPoints])
+    self.ymax = max([p[1] for p in self.boundPoints])
+
+    # add random points to fill interior
+    points = []
+    for i in range(n**2):
+      x = xmin + random.random() * (xmax - xmin)
+      y = ymin + random.random() * (ymax - ymin)
+      p = numpy.array([x, y])
+      if self.isInDomain(p):
+        points.append(p)
+
+    # triangulate
+    points += boundPoints
+    delaunay = Delaunay2d(points)
+
+    def f(x, y):
+      return eval(fFunc)
+
+    def g(x, y):
+      return eval(gFunc)
+
+    def s(x, y):
+      return eval(sFunc)
+
+    elliptic = Elliptic2d(f, g, s)
+    elliptic.assemble(delaunay)
+    elliptic.applyBoundaryConditions(bcs)
+
+    slvr = Cg(elliptic.getStiffnesMatrix(), elliptic.getSourceVector())
+    p = numpy.array([mat[i, i] for i in range(n)])
+    n = len(points)
+    x0 = numpy.zeros(n, numpy.float64)
+    slvr.solve(precond=p, x0=zeros, numIters=2*n, tol=1.e-10)
+
+    self.jsDraw(delaunay, slvr.getSolutionVector())
+
+  def jsDraw(self, triangulation, solution):
+    width = 500
+    height = int(width * (self.ymax - self.ymin)/(self.xmax - self.xmin))
+    res = '''
+<canvas id="myCanvas" width="%d" height="%d" style="border:1px solid #000000;">
+  <script>
+    var c = document.getElementById("myCanvas");
+    var ctx = c.getContext("2d");
+    <!- fill the triangles -->
+''' % (width, height)
+  for i in range(len(solution)):
+
+    
+</canvas>
+    '''
 
 
-def drawBoundary(width, xExpression, yExpression, numSegments):
+def drawBoundary(xExpression, yExpression, numSegments):
   """
-  @param width number of canvas pixels in the x direction
   @param xExpression x-expression of 0 <= t <= 1
   @param yExpression y-expression of 0 <= t <= 1
   @param numSegments number of segments
@@ -24,14 +95,19 @@ def drawBoundary(width, xExpression, yExpression, numSegments):
   yPix = int( height*(ymax - ys[0])/(ymax - ymin) )
   javaScript = """
 <div id="bottomPane">
-  <canvas id="myCanvas" width="%d" height="%d"
+  var xmin = %f;
+  var xmax = %f;
+  var ymin = %f;
+  var ymax = %f;
+  var height = $screen.width (ymax - ymin) / float(xmax - xmin);
+  <canvas id="myCanvas" width="$screen.width" height="%d"
   style="border:1px solid #000000;">
     <script>
       var c = document.getElementById("myCanvas");
       var ctx = c.getContext("2d");
       ctx.beginPath();
       ctx.moveTo(%d,%d);
-""" % (width, height, xPix, yPix)
+""" % (xmin, xmax, ymin, ymax, xPix, yPix)
   for i in range(1, numSegments + 1):
     xPix = int( width*(xs[i % numSegments] - xmin)/(xmax - xmin) )
     yPix = int( height*(ymax - ys[i % numSegments])/(ymax - ymin) )
@@ -46,7 +122,7 @@ def drawBoundary(width, xExpression, yExpression, numSegments):
 """
   return javaScript
 
-form = b'''
+FORM = b'''
 <!DOCTYPE html>
 
 <html>
@@ -102,7 +178,7 @@ on x =  <input type="text" placeholder="Enter function(t)" name="xFunc" value="c
 
 def application(environ, start_response):
 
-	html = (form % '')
+	html = (FORM % '')
 
 	if environ['REQUEST_METHOD'] == 'POST':
 		post_env = environ.copy()
@@ -111,8 +187,20 @@ def application(environ, start_response):
 				                environ = post_env, 
 				                keep_blank_values = True)
 
-		boundaryPointsScript = drawBoundary(500, post['xFunc'].value, post['yFunc'].value, 16)
-		html = (form % boundaryPointsScript)
+    elliptic = Elliptic2D(f=post['fFunc'], 
+                          g=post['gFunc'],
+                          s=post['sFunc'],
+                          xBound=post['xFunc'],
+                          yBound=post['yFunc'],
+                          bcs=post['BCs'])
+
+    js = draw(elliptic, width=500)
+
+		boundaryPointsJS = drawBoundary(width=500, 
+      xExpression=post['xFunc'].value, 
+      yExpression=post['yFunc'].value, 
+      numSegments=40)
+		html = (FORM % boundaryPointsJS)
 
 	status = '200 OK'
 	response_headers = [('Content-Type', 'text/html'),
@@ -120,7 +208,7 @@ def application(environ, start_response):
 	start_response(status, response_headers)
 	return [html]
 
-
+##########################################################################
 if __name__ == '__main__':
 
 	import sys
@@ -128,7 +216,7 @@ if __name__ == '__main__':
 
 	parser = argparse.ArgumentParser(description='Run elliptic 2d server.')
 	parser.add_argument('--port', dest='port', type=int, 
-    default=8051, help='Port number')
+    default=9000, help='Port number')
 	args = parser.parse_args(sys.argv[1:])
 
 	httpd = make_server('localhost', args.port, application)
