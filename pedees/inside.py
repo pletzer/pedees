@@ -38,6 +38,28 @@ class Inside:
         return False
     return True
 
+  def computeNormalToPlane(self, axis, pm):
+    normal = numpy.zeros( (self.ndims,), numpy.float64 )
+    normal[axis] = pm
+    loCorner = self.xmins
+    if pm > 0:
+      loCorner[axis] = self.xmaxs[axis]
+    return normal, loCorner
+
+  def computeOptimalDirection(self, point):
+    # iterate over the faces of the box then find the minimum distance bwetween
+    # the point and the face. 
+    minDistance = float('inf')
+    direction = float('inf') * numpy.ones( (self.ndims,), numpy.float64 )
+    for pm in (-1, 1):
+      for axis in range(self.ndims):
+        normal, loCorner = self.computeNormalToPlane(axis, pm)
+        distance = numpy.dot(normal, loCorner - point)
+        if abs(distance) < minDistance:
+          direction = normal * distance
+          minDistance = abs(distance)
+    return direction
+
   def computeIntersection(self, point, face, direction):
     self.mat[:, 0] = direction
     self.b = self.points[face[0]] - point
@@ -57,11 +79,12 @@ class Inside:
       return False
 
     # direction is towards the high end box corner
-    direction = self.xmaxs - point
+    direction = self.computeOptimalDirection(point) # self.xmaxs - point
     numberOfIntersections = 0
     for face in self.faces:
 
       if not self.areBoxesOverlapping(point, direction, face):
+        # intersection is impossible, don't bother...
         continue
 
       lmbda, xis = self.computeIntersection(point, face, direction)
