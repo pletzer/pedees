@@ -18,7 +18,11 @@ class Delaunay2d:
 
     # data structures
     self.points = points[:] # copy
-    self.triangles = [] # cells
+
+    # id -> [point indices], a dict so we can easily remove elements
+    # without breaking the indexing
+    self.triangles = {} 
+
     self.edge2Triangles = {} # edge to triangle(s) map
     self.boundaryEdges = set()
     self.maxArea = maxArea
@@ -57,7 +61,7 @@ class Delaunay2d:
     if index <= len(self.points) - 3:
       tri = [index, index + 1, index + 2]
       self.makeCounterClockwise(tri)
-      self.triangles.append(tri)
+      self.triangles[len(self.triangles)] = tri
 
       # boundary edges
       e01 = (tri[0], tri[1])
@@ -91,14 +95,15 @@ class Delaunay2d:
     while not stop:
 
       tIndices = []
-      for i in range(len(self.triangles)):
-        ia, ib, ic = self.triangles[i]
+      for i, tri in self.triangles.items():
+        ia, ib, ic = tri
         area = 0.5 * self.getArea(ia, ib, ic)
         if area > self.maxArea:
           print '... area = ', area, ' self.maxArea = ', self.maxArea
+          print '... vertices: ', self.points[ia], self.points[ib], self.points[ic]
           tIndices.append(i)
           
-      stop = (len(tIndices) == 0)
+      stop = True #(len(tIndices) == 0)
 
       for ti in tIndices:
         self.refineCell(ti)
@@ -126,16 +131,13 @@ class Delaunay2d:
     # add the point to our list
     self.points.append(newPoint)
 
-    # delete the cell
-    del self.triangles[index]
-
     # add new cells
     tabn = len(self.triangles)
     tbcn = tabn + 1
     tcan = tbcn + 1
-    self.triangles += [(ia, ib, newPointIndex), 
-                       (ib, ic, newPointIndex), 
-                       (ic, ia, newPointIndex)]
+    self.triangles[tabn] = (ia, ib, newPointIndex)
+    self.triangles[tbcn] = (ib, ic, newPointIndex)
+    self.triangles[tcan] = (ic, ia, newPointIndex)
 
     # old edges
     eab = self.makeKey(ia, ib)
@@ -153,6 +155,8 @@ class Delaunay2d:
     self.edge2Triangles[ean] = [tabn, tcan]
     self.edge2Triangles[ebn] = [tbcn, tabn]
     self.edge2Triangles[ecn] = [tcan, tbcn]
+
+    del self.triangles[index]
 
   def getPoints(self):
     """
@@ -338,7 +342,7 @@ class Delaunay2d:
 
         # create new triangle
         newTri = [edge[0], ip, edge[1]]
-        self.triangles.append(newTri)
+        self.triangles[len(self.triangles)] = newTri
 
         # update the edge to triangle map
         e = list(edge[:])
