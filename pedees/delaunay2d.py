@@ -27,6 +27,9 @@ class Delaunay2d:
     self.boundaryEdges = set()
     self.maxArea = maxArea
 
+    # keep track of the triangles to remove
+    self.trianglesToRemove = set()
+
     # not currently used
     self.appliedBoundaryEdges = None
     self.holes = None
@@ -89,8 +92,6 @@ class Delaunay2d:
       self.addPoint(i)
 
     # refine
-    print '*** number of triangles before = ', len(self.triangles)
-    print '*** number of edges before = ', len(self.edge2Triangles)
     stop = False
     while not stop:
 
@@ -99,8 +100,6 @@ class Delaunay2d:
         ia, ib, ic = tri
         area = 0.5 * self.getArea(ia, ib, ic)
         if area > self.maxArea:
-          print '... area = ', area, ' self.maxArea = ', self.maxArea
-          print '... vertices: ', self.points[ia], self.points[ib], self.points[ic]
           tIndices.append(i)
           
       stop = True #(len(tIndices) == 0)
@@ -108,11 +107,23 @@ class Delaunay2d:
       for ti in tIndices:
         self.refineCell(ti)
 
-    print '*** number of triangles after = ', len(self.triangles)
-    print '*** number of edges after = ', len(self.edge2Triangles)
-
     # remove all triangles inside holes
     # TO DO 
+
+    # remove triangles
+    for e, ts in self.edge2Triangles.items():
+      for t in ts:
+        if t in self.trianglesToRemove:
+          del self.edge2Triangles[e]
+          self.boundaryEdges.discard(e)
+
+    for ti in self.trianglesToRemove:
+      del self.triangles[ti]
+
+    # recursively flip edges
+    flipped = True
+    while flipped:
+      flipped = self.flipEdges()    
 
   def refineCell(self, index):
     """
@@ -156,7 +167,7 @@ class Delaunay2d:
     self.edge2Triangles[ebn] = [tbcn, tabn]
     self.edge2Triangles[ecn] = [tcan, tbcn]
 
-    del self.triangles[index]
+    self.trianglesToRemove.add(index)
 
   def getPoints(self):
     """
@@ -228,8 +239,11 @@ class Delaunay2d:
         return res
 
     iTri1, iTri2 = tris
-    tri1 = self.triangles[iTri1]
-    tri2 = self.triangles[iTri2]
+    tri1 = self.triangles.get(iTri1, -1)
+    tri2 = self.triangles.get(iTri2, -1)
+    if tri1 < 0 or tri2 < 0:
+      # triangle has been removed
+      return res
 
     # find the opposite vertices, not part of the edge
     iOpposite1 = -1
@@ -452,7 +466,7 @@ def testRandomTrianglesRefine():
   import random
   random.seed(1234)
   xyPoints = [numpy.array([random.random(), random.random()]) for i in range(10)]
-  delaunay = Delaunay2d(xyPoints, maxArea=0.1)
+  delaunay = Delaunay2d(xyPoints, maxArea=0.001)
   #print delaunay.edge2Triangles
   #print delaunay.boundaryEdges
   delaunay.show()
