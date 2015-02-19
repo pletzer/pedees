@@ -396,9 +396,9 @@ class Delaunay2d:
         self.boundaryEdges.add(bedge)
 
     # recursively flip edges
-    flipped = True
-    while flipped:
-      flipped = self.flipEdges()
+    #flipped = True
+    #while flipped:
+      #flipped = self.flipEdges()
 
   def makeKey(self, i1, i2):
     """
