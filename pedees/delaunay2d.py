@@ -22,6 +22,7 @@ class Delaunay2d:
     # id -> [point indices], a dict so we can easily remove elements
     # without breaking the indexing
     self.triangles = {} 
+    self.triangleCounter = 0
 
     self.edge2Triangles = {} # edge to triangle(s) map
     self.boundaryEdges = set()
@@ -64,7 +65,8 @@ class Delaunay2d:
     if index <= len(self.points) - 3:
       tri = [index, index + 1, index + 2]
       self.makeCounterClockwise(tri)
-      self.triangles[len(self.triangles)] = tri
+      self.triangles[self.triangleCounter] = tri
+      self.triangleCounter += 1
 
       # boundary edges
       e01 = (tri[0], tri[1])
@@ -102,28 +104,28 @@ class Delaunay2d:
         if area > self.maxArea:
           tIndices.append(i)
           
-      stop = True #(len(tIndices) == 0)
+      stop = (len(tIndices) == 0)
 
       for ti in tIndices:
         self.refineCell(ti)
 
+      # remove triangles
+      for ti in self.trianglesToRemove:
+        del self.triangles[ti]
+      self.trianglesToRemove = set()
+
+      # recursively flip edges
+      flipped = True
+      while flipped:
+        flipped = self.flipEdges()    
+
     # remove all triangles inside holes
     # TO DO 
 
-    # remove triangles
-    for e, ts in self.edge2Triangles.items():
-      for t in ts:
-        if t in self.trianglesToRemove:
-          del self.edge2Triangles[e]
-          self.boundaryEdges.discard(e)
-
-    for ti in self.trianglesToRemove:
-      del self.triangles[ti]
-
-    # recursively flip edges
     flipped = True
     while flipped:
       flipped = self.flipEdges()    
+
 
   def refineCell(self, index):
     """
@@ -143,9 +145,10 @@ class Delaunay2d:
     self.points.append(newPoint)
 
     # add new cells
-    tabn = len(self.triangles)
+    tabn = self.triangleCounter
     tbcn = tabn + 1
     tcan = tbcn + 1
+    self.triangleCounter += 3
     self.triangles[tabn] = (ia, ib, newPointIndex)
     self.triangles[tbcn] = (ib, ic, newPointIndex)
     self.triangles[tcan] = (ic, ia, newPointIndex)
@@ -356,12 +359,13 @@ class Delaunay2d:
 
         # create new triangle
         newTri = [edge[0], ip, edge[1]]
-        self.triangles[len(self.triangles)] = newTri
+        self.triangles[self.triangleCounter] = newTri
+        self.triangleCounter += 1
 
         # update the edge to triangle map
         e = list(edge[:])
         e.sort()
-        iTri = len(self.triangles) - 1 
+        iTri = self.triangleCounter - 1 
         self.edge2Triangles[tuple(e)].append(iTri)
 
         # add the two boundary edges
@@ -408,7 +412,7 @@ class Delaunay2d:
       return (i1, i2)
     return (i2, i1)
 
-  def show(self, width=500, height=300):
+  def show(self, width=500, height=300, showVertices=False):
 
     import Tkinter
 
@@ -416,19 +420,25 @@ class Delaunay2d:
     ymin = min([p[1] for p in self.points])
     xmax = max([p[0] for p in self.points])
     ymax = max([p[1] for p in self.points])
-    w = width - 2
-    h = height - 2
+    padding = 5
+    w = width - 2*padding
+    h = height - 2*padding
 
     master = Tkinter.Tk()
     c = Tkinter.Canvas(master, width=width, height=height)
     c.pack()
     for e in self.edge2Triangles:
       i1, i2 = e
-      xp1 = 1 + int(w*(self.points[i1][0] - xmin)/(xmax - xmin))
-      yp1 = 1 + int(h*(ymax - self.points[i1][1])/(ymax - ymin))
-      xp2 = 1 + int(w*(self.points[i2][0] - xmin)/(xmax - xmin))
-      yp2 = 1 + int(h*(ymax - self.points[i2][1])/(ymax - ymin))
+      xp1 = padding + int(w*(self.points[i1][0] - xmin)/(xmax - xmin))
+      yp1 = padding + int(h*(ymax - self.points[i1][1])/(ymax - ymin))
+      xp2 = padding + int(w*(self.points[i2][0] - xmin)/(xmax - xmin))
+      yp2 = padding + int(h*(ymax - self.points[i2][1])/(ymax - ymin))
       c.create_line(xp1, yp1, xp2, yp2)
+    if showVertices:
+      for i in range(len(self.points)):
+        xp = padding + int(w*(self.points[i][0] - xmin)/(xmax - xmin))
+        yp = padding + int(h*(ymax - self.points[i][1])/(ymax - ymin))
+        c.create_text(xp, yp, text=str(i))
     Tkinter.mainloop()
 
 #############################################################################
@@ -466,7 +476,7 @@ def testRandomTrianglesRefine():
   import random
   random.seed(1234)
   xyPoints = [numpy.array([random.random(), random.random()]) for i in range(10)]
-  delaunay = Delaunay2d(xyPoints, maxArea=0.001)
+  delaunay = Delaunay2d(xyPoints, maxArea=0.02)
   #print delaunay.edge2Triangles
   #print delaunay.boundaryEdges
   delaunay.show()
