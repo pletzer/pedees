@@ -22,6 +22,7 @@ class Delaunay2d:
     # id -> [point indices], a dict so we can easily remove elements
     # without breaking the indexing
     self.triangles = {} 
+    # counter keeps track of the highest triangle ID number
     self.triangleCounter = 0
 
     self.edge2Triangles = {} # edge to triangle(s) map
@@ -31,14 +32,35 @@ class Delaunay2d:
     # keep track of the triangles to remove
     self.trianglesToRemove = set()
 
-    # not currently used
-    self.appliedBoundaryEdges = None
-    self.holes = None
-
+    # triangulate the domain
     self.triangulate()
 
-  def triangulate(self):
+  def getPoints(self):
+    """
+    @return points
+    """
+    return self.points
 
+  def getTriangles(self):
+    """
+    @return triangles
+    """
+    return self.triangles
+
+  def getEdges(self):
+    """
+    @return egdes
+    """
+    return self.edge2Triangles.keys()
+
+  def getBoundaryEdges(self):
+    return self.boundaryEdges
+
+  def triangulate(self):
+    """
+    Triangulate the domain
+    """
+    
     # compute center of gravity
     cg = numpy.zeros((2,), numpy.float64)
     for pt in self.points:
@@ -126,10 +148,14 @@ class Delaunay2d:
     while flipped:
       flipped = self.flipEdges()    
 
-
   def refineCell(self, index):
     """
     Add middle point to cell
+    @param index triangle ID
+
+    @note will append "index" to self.trianglesToRemove. This method does not 
+    remove the triangle but only keep track of the triangles to remove. The 
+    self.edge2Triangles dict will be updated. 
     """
     ia, ib, ic = self.triangles[index]
 
@@ -172,26 +198,18 @@ class Delaunay2d:
 
     self.trianglesToRemove.add(index)
 
-  def getPoints(self):
+  def removeCells(self, indices):
     """
-    @return points
+    Remove triangles
+    @param indices triangle IDs to remove
     """
-    return self.points
-
-  def getTriangles(self):
-    """
-    @return triangles
-    """
-    return self.triangles
-
-  def getEdges(self):
-    """
-    @return egdes
-    """
-    return self.edge2Triangles.keys()
-
-  def getBoundaryEdges(self):
-    return self.boundaryEdges
+    for index in indices:
+      del self.triangles[index]
+      # remove any reference to triangle index in self.edge2Triangles
+      for e, t in self.edge2Triangles.items:
+        i = t.find(index)
+        if i >= 0: 
+          del self.edge2Triangles[e][i]
 
   def getArea(self, ip0, ip1, ip2):
     """
