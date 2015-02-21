@@ -3,6 +3,9 @@
 import numpy
 import math
 import copy
+import operator
+
+from inside import Inside
 
 class Delaunay2d:
 
@@ -54,13 +57,45 @@ class Delaunay2d:
     return self.edge2Triangles.keys()
 
   def getBoundaryEdges(self):
+    """
+    @return boundary edges
+    """
     return self.boundaryEdges
+
+  def carve(self, xyPoints):
+    """
+    Remove cells that are inside holes
+    @param internalBoundaries list of closed contours
+    """
+
+    n = len(xyPoints)
+    contour = [(i, i+1) for i in range(n)] + [(n-1, 0)]
+
+    # compute the center of gravity location for each triangle. If the 
+    # point is inside the contour then tag the triangle for removal.
+    trianglesToRemove = set()
+
+    # iterate over all the cells
+    for tId, tVals in self.triangles.items():
+
+      # compute the center of gravity of the cell
+      n = len(tVals)
+      cgPosition = reduce(operator.add, [self.points[i] for i in tVals])/float(n)
+
+      # is the center of gravity inside the contour?
+      insideChecker = Inside(xyPoints, contour)
+      if insideChecker.isInside(cgPosition):
+        # tag cell for removal
+        trianglesToRemove.add(tId)
+
+    # now remove
+    self.removeCells(trianglesToRemove)
 
   def triangulate(self):
     """
     Triangulate the domain
     """
-    
+
     # compute center of gravity
     cg = numpy.zeros((2,), numpy.float64)
     for pt in self.points:
@@ -204,11 +239,12 @@ class Delaunay2d:
     @param indices triangle IDs to remove
     """
     for index in indices:
+      print '*** removing triangle ', index
       del self.triangles[index]
       # remove any reference to triangle index in self.edge2Triangles
-      for e, t in self.edge2Triangles.items:
-        i = t.find(index)
-        if i >= 0: 
+      for e, t in self.edge2Triangles.items():
+        if t.count(index) > 0:
+          i = t.index(index)
           del self.edge2Triangles[e][i]
 
   def getArea(self, ip0, ip1, ip2):
@@ -430,7 +466,7 @@ class Delaunay2d:
       return (i1, i2)
     return (i2, i1)
 
-  def show(self, width=500, height=300, showVertices=False):
+  def show(self, width=500, height=500, showVertices=False, showCells=False, showContour=[]):
 
     import Tkinter
 
@@ -452,11 +488,29 @@ class Delaunay2d:
       xp2 = padding + int(w*(self.points[i2][0] - xmin)/(xmax - xmin))
       yp2 = padding + int(h*(ymax - self.points[i2][1])/(ymax - ymin))
       c.create_line(xp1, yp1, xp2, yp2)
+
     if showVertices:
       for i in range(len(self.points)):
         xp = padding + int(w*(self.points[i][0] - xmin)/(xmax - xmin))
         yp = padding + int(h*(ymax - self.points[i][1])/(ymax - ymin))
         c.create_text(xp, yp, text=str(i))
+
+    if showCells:
+      for tId, tVals in self.triangles.items():
+        cg = reduce(operator.add, [self.points[i] for i in tVals])/float(len(tVals))
+        xp = padding + int(w*(cg[0] - xmin)/(xmax - xmin))
+        yp = padding + int(h*(ymax - cg[1])/(ymax - ymin))
+        c.create_text(xp, yp, text=str(tId))
+
+    if len(showContour) > 0:
+      for i in range(len(showContour) - 1):
+        xp1 = padding + int(w*(showContour[i][0] - xmin)/(xmax - xmin))
+        yp1 = padding + int(h*(ymax - showContour[i][1])/(ymax - ymin))
+        xp2 = padding + int(w*(showContour[i+1][0] - xmin)/(xmax - xmin))
+        yp2 = padding + int(h*(ymax - showContour[i+1][1])/(ymax - ymin))
+        c.create_line(xp1, yp1, xp2, yp2, fill='red')
+
+
     Tkinter.mainloop()
 
 #############################################################################
@@ -499,12 +553,29 @@ def testRandomTrianglesRefine():
   #print delaunay.boundaryEdges
   delaunay.show()
 
+def testAnnulus():
+  import math
+  ntOut = 16
+  dtOut = 2*math.pi/float(ntOut)
+  ntIn = 8
+  dtIn = 2*math.pi/float(ntIn)
+  # outer contour
+  xyPoints = [numpy.array([math.cos(i*dtOut), math.sin(i*dtOut)]) for i in range(ntOut)]
+  # inner contour
+  xyPointsInterior = [0.7*numpy.array([math.cos(i*dtIn), 0.7*math.sin(i*dtIn)]) for i in range(ntIn)]
+  xyPoints += xyPointsInterior
+  delaunay = Delaunay2d(xyPoints, maxArea=0.2)
+  # carve out interior
+  #delaunay.carve(xyPointsInterior)
+  delaunay.show(showCells=True, showContour=xyPointsInterior)
+
 if __name__ == '__main__': 
   #testOneTriangle()
   #testOneTriangle2()
   #testTwoTriangles()
   #testRandomTriangles()
-  testRandomTrianglesRefine()
+  #testRandomTrianglesRefine()
+  testAnnulus()
 
 
 
