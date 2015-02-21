@@ -69,7 +69,7 @@ class Delaunay2d:
     """
 
     n = len(xyPoints)
-    contour = [(i, i+1) for i in range(n)] + [(n-1, 0)]
+    contour = [(i, i+1) for i in range(n - 1)] + [(n-1, 0)]
 
     # compute the center of gravity location for each triangle. If the 
     # point is inside the contour then tag the triangle for removal.
@@ -239,13 +239,15 @@ class Delaunay2d:
     @param indices triangle IDs to remove
     """
     for index in indices:
-      print '*** removing triangle ', index
       del self.triangles[index]
       # remove any reference to triangle index in self.edge2Triangles
       for e, t in self.edge2Triangles.items():
         if t.count(index) > 0:
           i = t.index(index)
           del self.edge2Triangles[e][i]
+          if len(self.edge2Triangles[e]) == 0:
+            # remove the edge since there is triangle attached to it
+            del self.edge2Triangles[e]
 
   def getArea(self, ip0, ip1, ip2):
     """
@@ -566,7 +568,7 @@ def testAnnulus():
   xyPoints += xyPointsInterior
   delaunay = Delaunay2d(xyPoints, maxArea=0.2)
   # carve out interior
-  #delaunay.carve(xyPointsInterior)
+  delaunay.carve(xyPointsInterior)
   delaunay.show(showCells=True, showContour=xyPointsInterior)
 
 if __name__ == '__main__': 

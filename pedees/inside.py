@@ -70,6 +70,7 @@ class Inside:
     return not (numberOfIntersections % 2)
 
   def areBoxesOverlapping(self, point, face):
+
     for i in range(self.ndims):
 
       xminFace = min( [self.points[j][i] for j in face] )
