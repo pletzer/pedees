@@ -476,7 +476,7 @@ def testRandomTrianglesRefine():
   import random
   random.seed(1234)
   xyPoints = [numpy.array([random.random(), random.random()]) for i in range(10)]
-  delaunay = Delaunay2d(xyPoints, maxArea=0.02)
+  delaunay = Delaunay2d(xyPoints, maxArea=0.005)
   #print delaunay.edge2Triangles
   #print delaunay.boundaryEdges
   delaunay.show()
