@@ -22,6 +22,15 @@ class Delaunay2d:
     # data structures
     self.points = points[:] # copy
 
+    # compute low/high corner points of domain
+    n = len(points[0]) # must have at least one point
+    self.xmins = +float('inf') * numpy.ones( (n,), numpy.float64 )
+    self.xmaxs = -float('inf') * numpy.ones( (n,), numpy.float64 )
+    for i in range(n):
+      for p in points:
+        self.xmins[i] = min(self.xmins[i], p[i])
+        self.xmaxs[i] = max(self.xmaxs[i], p[i])
+
     # id -> [point indices], a dict so we can easily remove elements
     # without breaking the indexing
     self.triangles = {} 
@@ -81,10 +90,12 @@ class Delaunay2d:
       # compute the center of gravity of the cell
       n = len(tVals)
       cgPosition = reduce(operator.add, [self.points[i] for i in tVals])/float(n)
+      print '????? tId = ', tId, ' cgPosition = ', cgPosition, ' norm: ', math.sqrt(numpy.dot(cgPosition, cgPosition))
 
       # is the center of gravity inside the contour?
-      insideChecker = Inside(xyPoints, contour)
+      insideChecker = Inside(xyPoints, contour, self.xmins, self.xmaxs)
       if insideChecker.isInside(cgPosition):
+        print '... triangle tId ', tId, ' is tagged for removal'
         # tag cell for removal
         trianglesToRemove.add(tId)
 
@@ -557,19 +568,20 @@ def testRandomTrianglesRefine():
 
 def testAnnulus():
   import math
-  ntOut = 16
+  ntOut = 4
   dtOut = 2*math.pi/float(ntOut)
-  ntIn = 8
+  ntIn = 4
   dtIn = 2*math.pi/float(ntIn)
   # outer contour
   xyPoints = [numpy.array([math.cos(i*dtOut), math.sin(i*dtOut)]) for i in range(ntOut)]
   # inner contour
-  xyPointsInterior = [0.7*numpy.array([math.cos(i*dtIn), 0.7*math.sin(i*dtIn)]) for i in range(ntIn)]
+  xyPointsInterior = [ numpy.array( [0.5*math.cos(i*dtIn), 0.5*math.sin(i*dtIn)] ) \
+                       for i in range(ntIn)]
   xyPoints += xyPointsInterior
-  delaunay = Delaunay2d(xyPoints, maxArea=0.2)
+  delaunay = Delaunay2d(xyPoints, maxArea=0.4)
   # carve out interior
   delaunay.carve(xyPointsInterior)
-  delaunay.show(showCells=True, showContour=xyPointsInterior)
+  delaunay.show(showCells=True, showContour=xyPointsInterior, showVertices=True)
 
 if __name__ == '__main__': 
   #testOneTriangle()

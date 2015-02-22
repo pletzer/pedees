@@ -45,8 +45,7 @@ class Inside:
     # any direction will do but things will run faster if the direction
     # points to the nearest domain box face (fewer intersections to 
     #  compute)
-    self.computeOptimalDirection(point) # self.xmaxs - point
-    print '*** optimal direction for point ', point, ' is self.direction = ', self.direction
+    self.computeOptimalDirection(point)
 
     # set the first column in our matrix (independent of the face)
     self.mat[:, 0] = self.direction
@@ -56,21 +55,26 @@ class Inside:
     for face in self.faces:
 
       # compute the overlap betwen the ray box and the face box
+      """
       if not self.areBoxesOverlapping(point, face):
         # intersection is impossible, don't bother...
+        print '\t>>>> no intersection possible between point = ', point, ' and face = ', face
         continue
+      """
 
       lmbda, xis = self.computeIntersection(point, face)
       if lmbda > 0.0 + self.eps:
         # the direction is ok
-        sums = numpy.cumsum(xis)
-        isInside = reduce(lambda x, y: x and y, 
-          [xis[i] > 0.0 + self.eps and xis[i] < 1.0 - sums[i] - self.eps \
-          for i in range(len(xis))])
-        if isInside:
+        sums = 0.0
+        rayIntersects = True
+        for i in range(len(xis)):
+          rayIntersects &= (xis[i] > self.eps) and (xis[i] < 1 - sums - self.eps)
+          sums += xis[i]
+        if rayIntersects:
           numberOfIntersections += 1
 
-    return not (numberOfIntersections % 2)
+    # even number is outside (False), odd number means inside (True)
+    return (numberOfIntersections % 2)
 
   def areBoxesOverlapping(self, point, face):
 
@@ -103,10 +107,13 @@ class Inside:
       pls = (1 + pm)/2.
       mns = (1 - pm)/2.
       for axis in range(self.ndims):
-        normal = numpy.zeros( (self.ndims,), numpy.float64 )
+        # the normal vector contains very small values in place of zero elements 
+        #  in order to avoid issues with ray hitting exactly on a node
+        normal = 10 * self.eps * numpy.random.rand( self.ndims )
         normal[axis] = pm
         distance = pls*(self.domainMaxs[axis] - point[axis]) + mns*(point[axis] - self.domainMins[axis])
         if distance < minDistance:
+          # expand a little beyond the domain (1.1)
           self.direction = normal * (1.1* distance)
           minDistance = distance
 
@@ -125,7 +132,9 @@ def test2d_1():
             numpy.array([1., 0.]),
             numpy.array([0., 1.])]
   faces = [(0, 1), (1, 2), (2, 0)]
-  inside = Inside(points, faces)
+  inside = Inside(points, faces, 
+      domainMins=numpy.array([0., 0.]), 
+      domainMaxs=numpy.array([1., 1.]))
 
   # really outside
   assert(inside.isInside(numpy.array([-0.1, -0.2])) == False)
