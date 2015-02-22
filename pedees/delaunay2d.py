@@ -566,7 +566,7 @@ def testRandomTrianglesRefine():
 
 def testAnnulus():
   import math
-  ntOut = 4
+  ntOut = 8
   dtOut = 2*math.pi/float(ntOut)
   ntIn = 4
   dtIn = 2*math.pi/float(ntIn)
@@ -576,10 +576,10 @@ def testAnnulus():
   xyPointsInterior = [ numpy.array( [0.5*math.cos(i*dtIn), 0.5*math.sin(i*dtIn)] ) \
                        for i in range(ntIn)]
   xyPoints += xyPointsInterior
-  delaunay = Delaunay2d(xyPoints, maxArea=0.4)
+  delaunay = Delaunay2d(xyPoints, maxArea=0.01)
   # carve out interior
   delaunay.carve(xyPointsInterior)
-  delaunay.show(showCells=True, showContour=xyPointsInterior, showVertices=True)
+  delaunay.show(showCells=False, showContour=xyPointsInterior, showVertices=False)
 
 if __name__ == '__main__': 
   #testOneTriangle()
