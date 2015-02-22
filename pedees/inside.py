@@ -55,12 +55,9 @@ class Inside:
     for face in self.faces:
 
       # compute the overlap betwen the ray box and the face box
-      """
       if not self.areBoxesOverlapping(point, face):
         # intersection is impossible, don't bother...
-        print '\t>>>> no intersection possible between point = ', point, ' and face = ', face
         continue
-      """
 
       lmbda, xis = self.computeIntersection(point, face)
       if lmbda > 0.0 + self.eps:
@@ -108,8 +105,8 @@ class Inside:
       mns = (1 - pm)/2.
       for axis in range(self.ndims):
         # the normal vector contains very small values in place of zero elements 
-        #  in order to avoid issues with ray hitting exactly on a node
-        normal = 10 * self.eps * numpy.random.rand( self.ndims )
+        #  in order to avoid issues with ray hitting exactly a node
+        normal = 100 * self.eps * numpy.random.rand( self.ndims )
         normal[axis] = pm
         distance = pls*(self.domainMaxs[axis] - point[axis]) + mns*(point[axis] - self.domainMins[axis])
         if distance < minDistance:

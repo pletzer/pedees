@@ -90,12 +90,10 @@ class Delaunay2d:
       # compute the center of gravity of the cell
       n = len(tVals)
       cgPosition = reduce(operator.add, [self.points[i] for i in tVals])/float(n)
-      print '????? tId = ', tId, ' cgPosition = ', cgPosition, ' norm: ', math.sqrt(numpy.dot(cgPosition, cgPosition))
 
       # is the center of gravity inside the contour?
       insideChecker = Inside(xyPoints, contour, self.xmins, self.xmaxs)
       if insideChecker.isInside(cgPosition):
-        print '... triangle tId ', tId, ' is tagged for removal'
         # tag cell for removal
         trianglesToRemove.add(tId)
 
