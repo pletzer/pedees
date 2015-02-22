@@ -4,12 +4,14 @@ import numpy
 
 class Inside:
 
-  def __init__(self, points, faces):
+  def __init__(self, points, faces, domainMins, domainMaxs):
 
     self.eps = 1.23456789e-14
 
     self.faces = faces
     self.points = points
+    self.domainMins = domainMins
+    self.domainMaxs = domainMaxs
 
     # must have at least one point
     self.ndims = len(points[0])
@@ -44,6 +46,7 @@ class Inside:
     # points to the nearest domain box face (fewer intersections to 
     #  compute)
     self.computeOptimalDirection(point) # self.xmaxs - point
+    print '*** optimal direction for point ', point, ' is self.direction = ', self.direction
 
     # set the first column in our matrix (independent of the face)
     self.mat[:, 0] = self.direction
@@ -86,14 +89,6 @@ class Inside:
         return False
     return True
 
-  def computeNormalToPlane(self, axis, pm):
-    normal = numpy.zeros( (self.ndims,), numpy.float64 )
-    normal[axis] = pm
-    loCorner = self.xmins
-    if pm > 0:
-      loCorner[axis] = self.xmaxs[axis]
-    return normal, loCorner
-
   def computeOptimalDirection(self, point):
     """
     Compute the direction of the ray to to the nearest 
@@ -103,13 +98,17 @@ class Inside:
     # iterate over the faces of the box then find the minimum distance between
     # the point and the face. 
     minDistance = float('inf')
+
     for pm in (-1, 1):
+      pls = (1 + pm)/2.
+      mns = (1 - pm)/2.
       for axis in range(self.ndims):
-        normal, loCorner = self.computeNormalToPlane(axis, pm)
-        distance = numpy.dot(normal, loCorner - point)
-        if abs(distance) < minDistance:
-          self.direction = normal * distance
-          minDistance = abs(distance)
+        normal = numpy.zeros( (self.ndims,), numpy.float64 )
+        normal[axis] = pm
+        distance = pls*(self.domainMaxs[axis] - point[axis]) + mns*(point[axis] - self.domainMins[axis])
+        if distance < minDistance:
+          self.direction = normal * (1.1* distance)
+          minDistance = distance
 
   def computeIntersection(self, point, face):
     self.b = self.points[face[0]] - point
