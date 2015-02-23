@@ -159,7 +159,16 @@ class Delaunay2d:
     for i in range(3, len(self.points)):
       self.addPoint(i)
 
-    # refine
+    self.refine()
+
+  def makeDelaunay(self):
+
+    flipped = True
+    while flipped:
+      flipped = self.flipEdges()    
+
+  def refine(self):
+
     stop = False
     while not stop:
 
@@ -180,17 +189,8 @@ class Delaunay2d:
         del self.triangles[ti]
       self.trianglesToRemove = set()
 
-      # recursively flip edges
-      flipped = True
-      while flipped:
-        flipped = self.flipEdges()    
+      self.makeDelaunay()
 
-    # remove all triangles inside holes
-    # TO DO 
-
-    flipped = True
-    while flipped:
-      flipped = self.flipEdges()    
 
   def refineCell(self, index):
     """
@@ -566,9 +566,9 @@ def testRandomTrianglesRefine():
 
 def testAnnulus():
   import math
-  ntOut = 8
+  ntOut = 32
   dtOut = 2*math.pi/float(ntOut)
-  ntIn = 4
+  ntIn = 32
   dtIn = 2*math.pi/float(ntIn)
   # outer contour
   xyPoints = [numpy.array([math.cos(i*dtOut), math.sin(i*dtOut)]) for i in range(ntOut)]
