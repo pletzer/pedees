@@ -44,9 +44,6 @@ class Delaunay2d:
     # keep track of the triangles to remove
     self.trianglesToRemove = set()
 
-    # triangulate the domain
-    self.triangulate()
-
   def getPoints(self):
     """
     @return points
@@ -159,7 +156,7 @@ class Delaunay2d:
     for i in range(3, len(self.points)):
       self.addPoint(i)
 
-    self.refine()
+    #self.refine()
 
   def makeDelaunay(self):
 
@@ -529,6 +526,8 @@ class Delaunay2d:
 def testOneTriangle():
   xyPoints = [numpy.array([0., 0.]), numpy.array([1., 0.]), numpy.array([0., 1.])]
   delaunay = Delaunay2d(xyPoints, maxArea=10.0)
+  delaunay.triangulate()
+  delaunay.makeDelaunay()
   print 'triangles: ', delaunay.getTriangles()
   print 'edges: ', delaunay.getEdges()
 
@@ -536,12 +535,16 @@ def testOneTriangle2():
   # points go clockwise
   xyPoints = [numpy.array([0., 0.]), numpy.array([0., 1.]), numpy.array([1., 0.])]
   delaunay = Delaunay2d(xyPoints, maxArea=10.0)
+  delaunay.triangulate()
+  delaunay.makeDelaunay()
   print 'triangles: ', delaunay.getTriangles()
   print 'edges: ', delaunay.getEdges()
 
 def testTwoTriangles():
   xyPoints = [numpy.array([0., 0.]), numpy.array([1., 0.]), numpy.array([0., 1.]), numpy.array([1., 1.])]
   delaunay = Delaunay2d(xyPoints, maxArea=10.0)
+  delaunay.triangulate()
+  delaunay.makeDelaunay()
   print 'triangles: ', delaunay.getTriangles()
   print 'edges: ', delaunay.getEdges()
   #delaunay.show()
@@ -551,24 +554,23 @@ def testRandomTriangles():
   random.seed(1234)
   xyPoints = [numpy.array([random.random(), random.random()]) for i in range(1000)]
   delaunay = Delaunay2d(xyPoints, maxArea=10.0)
-  #print delaunay.edge2Triangles
-  #print delaunay.boundaryEdges
-  #delaunay.show()
+  delaunay.triangulate()
+  delaunay.makeDelaunay()
 
 def testRandomTrianglesRefine():
   import random
   random.seed(1234)
   xyPoints = [numpy.array([random.random(), random.random()]) for i in range(10)]
   delaunay = Delaunay2d(xyPoints, maxArea=0.005)
-  #print delaunay.edge2Triangles
-  #print delaunay.boundaryEdges
+  delaunay.triangulate()
+  delaunay.makeDelaunay()
   delaunay.show()
 
 def testAnnulus():
   import math
-  ntOut = 32
+  ntOut = 16
   dtOut = 2*math.pi/float(ntOut)
-  ntIn = 32
+  ntIn = 4
   dtIn = 2*math.pi/float(ntIn)
   # outer contour
   xyPoints = [numpy.array([math.cos(i*dtOut), math.sin(i*dtOut)]) for i in range(ntOut)]
@@ -577,16 +579,23 @@ def testAnnulus():
                        for i in range(ntIn)]
   xyPoints += xyPointsInterior
   delaunay = Delaunay2d(xyPoints, maxArea=0.01)
+  delaunay.triangulate()
+  #delaunay.makeDelaunay()
+  #delaunay.refine()
+  delaunay.carve(xyPointsInterior)
+  delaunay.makeDelaunay()
+  delaunay.refine()
+  #delaunay.makeDelaunay()
   # carve out interior
   delaunay.carve(xyPointsInterior)
   delaunay.show(showCells=False, showContour=xyPointsInterior, showVertices=False)
 
 if __name__ == '__main__': 
-  #testOneTriangle()
-  #testOneTriangle2()
-  #testTwoTriangles()
-  #testRandomTriangles()
-  #testRandomTrianglesRefine()
+  testOneTriangle()
+  testOneTriangle2()
+  testTwoTriangles()
+  testRandomTriangles()
+  testRandomTrianglesRefine()
   testAnnulus()
 
 
