@@ -32,7 +32,7 @@ class Elliptic2d:
 		n = len(tri.points)
 		self.sourceVec = numpy.zeros( (n,), numpy.float64 )
 
-		for iabc in tri.triangles:
+		for i, iabc in tri.triangles.items():
 
 			ia, ib, ic = iabc
 			pa, pb, pc = tri.points[ia], tri.points[ib], tri.points[ic]
