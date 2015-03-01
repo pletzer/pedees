@@ -6,59 +6,6 @@ from math import cos, sin, tan, atan, atan2, pi, log, exp, e
 import numpy
 import random
 
-class Elliptic2d:
-  def __init__(self, fFunc, gFunc, sFunc, xFunc, yFunc, bcs):
-
-    random.seed(12345)
-
-    # generate boundary contour
-    self.boundPoints = []
-    n = 40
-    dt = 1.0/float(n)
-    for i in range(n):
-      t = dt*i
-      x, y = eval(xFunc), eval(yFunc)
-      self.boundPoints.append( numpy.array([x, y]) )
-
-    # box min/max points
-    self.xmin = min([p[0] for p in self.boundPoints])
-    self.ymin = min([p[1] for p in self.boundPoints])
-    self.xmax = max([p[0] for p in self.boundPoints])
-    self.ymax = max([p[1] for p in self.boundPoints])
-
-    # add random points to fill interior
-    points = []
-    for i in range(n**2):
-      x = xmin + random.random() * (xmax - xmin)
-      y = ymin + random.random() * (ymax - ymin)
-      p = numpy.array([x, y])
-      if self.isInDomain(p):
-        points.append(p)
-
-    # triangulate
-    points += boundPoints
-    delaunay = Delaunay2d(points)
-
-    def f(x, y):
-      return eval(fFunc)
-
-    def g(x, y):
-      return eval(gFunc)
-
-    def s(x, y):
-      return eval(sFunc)
-
-    elliptic = Elliptic2d(f, g, s)
-    elliptic.assemble(delaunay)
-    elliptic.applyBoundaryConditions(bcs)
-
-    slvr = Cg(elliptic.getStiffnesMatrix(), elliptic.getSourceVector())
-    p = numpy.array([mat[i, i] for i in range(n)])
-    n = len(points)
-    x0 = numpy.zeros(n, numpy.float64)
-    slvr.solve(precond=p, x0=zeros, numIters=2*n, tol=1.e-10)
-
-    self.jsDraw(delaunay, slvr.getSolutionVector())
 
   def jsDraw(self, triangulation, solution):
     width = 500
@@ -71,7 +18,7 @@ class Elliptic2d:
     <!- fill the triangles -->
 ''' % (width, height)
   for i in range(len(solution)):
-
+    
     
 </canvas>
     '''
