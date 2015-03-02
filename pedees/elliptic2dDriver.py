@@ -21,6 +21,12 @@ class Elliptic2dDriver:
     self.ellipt = Elliptic2d(self.ffunc, self.gfunc, self.sfunc)
     self.slvr = None
     self.solution = None
+  
+  def getTriangulation(self):
+    return self.delny
+
+  def getSolution(self):
+    return self.solution
 
   def triangulate(self, numCells=1000):
 

@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
+import sys
 from wsgiref.simple_server import make_server
 import cgi
 import numpy
-from pedees.ellipt2dDriver import Ellipt2dDriver
-from pedees import plot
+from pedees.elliptic2dDriver import Elliptic2dDriver
+from pedees.plot import Plot
 
 
 FORM = b'''
@@ -15,16 +16,16 @@ FORM = b'''
 <head>
 <style>
 #topPane {
-	background-color: orange;
-	color: black;
-	padding:5px;
-	float:left;
+  background-color: orange;
+  color: black;
+  padding:5px;
+  float:left;
 }
 #bottomPane {
-	background-color: white;
-	color: black;
-	float:left;
-	padding:5px;
+  background-color: white;
+  color: black;
+  float:left;
+  padding:5px;
 }
 </style>
 </head>
@@ -42,11 +43,10 @@ FORM = b'''
 &psi; =  
    <input type="text" placeholder="Enter function(x, y)" name="sFunc" value="0" size=10>
 
-</label> subject to <input type="text" placeholder="Enter function(t)" name="aFunc" value="0" size=2> 
-&part; &psi; / &part; n + 
+</label> subject to &part; &psi; / &part; n + 
    <input type="text" placeholder="Enter function(t)" name="bFunc" value="1" size=2>
 &psi; =  
-   <input type="text" placeholder="Enter function(t)" name="cFunc" value="0" size=2>
+   <input type="text" placeholder="Enter function(t)" name="cFunc" value="sin(2*pi*t)" size=2>
 </label> 
 on x =  <input type="text" placeholder="Enter function(t)" name="xFunc" value="cos(2*pi*t)" size=10>
    y = <input type="text" placeholder="Enter function(t)" name="yFunc" value="sin(2*pi*t)" size=10>
@@ -63,47 +63,55 @@ on x =  <input type="text" placeholder="Enter function(t)" name="xFunc" value="c
 
 def application(environ, start_response):
 
-	html = (FORM % '')
+  html = (FORM % '')
 
-	if environ['REQUEST_METHOD'] == 'POST':
-		post_env = environ.copy()
-		post_env['QUERY_STRING'] = ''
-		post = cgi.FieldStorage(fp = environ['wsgi.input'], 
-				                environ = post_env, 
-				                keep_blank_values = True)
+  if environ['REQUEST_METHOD'] == 'POST':
+    post_env = environ.copy()
+    post_env['QUERY_STRING'] = ''
+    post = cgi.FieldStorage(fp = environ['wsgi.input'], 
+                        environ = post_env, 
+                        keep_blank_values = True)
 
-    elliptic = Elliptic2DDriver(fFunc=post['fFunc'], 
-                          gFunc=post['gFunc'],
-                          sFunc=post['sFunc'],
-                          xFunc=post['xFunc'],
-                          yFunc=post['yFunc'])
+    fFuncStr = post.getfirst("fFunc", '1.0')
+    gFuncStr = post.getfirst("gFunc", '0.0')
+    sFuncStr = post.getfirst("sFunc", '0.0')
+    xFuncStr = post.getfirst("xFunc", 'cos(2*pi*t)')
+    yFuncStr = post.getfirst("yFunc", 'sin(2*pi*t)')
+
+    elliptic = Elliptic2dDriver(fFunc=fFuncStr, gFunc=gFuncStr, sFunc=sFuncStr, \
+                                xFunc=xFuncStr, yFunc=yFuncStr)
+
+    print >> sys.stderr, '*** elliptic.xFuncStr = ', elliptic.xFuncStr
     elliptic.triangulate(numCells = 100)
 
-    elliptic.applyBoundaryConditions(bFunc=post['bFunc'], cFunc=post['cFunc'])
+    bFunc = post.getfirst("bFunc", '1.0')
+    cFunc = post.getfirst("cFunc", '1.0')
+    elliptic.applyBoundaryConditions(bFunc=bFunc, cFunc=cFunc)
 
     elliptic.solve()
+    print >> sys.stderr, '???? solution = ', elliptic.getSolution()
 
-    js = plot.jsShow(elliptic, width=500, height=500)
+    pl = Plot(elliptic.getTriangulation(), width=500, height=500)
+    js = pl.jsShow(elliptic.getSolution())
 
-		html = (FORM % js)
+    html = (FORM % js)
 
-	status = '200 OK'
-	response_headers = [('Content-Type', 'text/html'),
-	                    ('Content-Length', str(len(html)))]
-	start_response(status, response_headers)
-	return [html]
+  status = '200 OK'
+  response_headers = [('Content-Type', 'text/html'),
+                      ('Content-Length', str(len(html)))]
+  start_response(status, response_headers)
+  return [html]
 
 ##########################################################################
 if __name__ == '__main__':
 
-	import sys
-	import argparse
+  import argparse
 
-	parser = argparse.ArgumentParser(description='Run elliptic 2d server.')
-	parser.add_argument('--port', dest='port', type=int, 
+  parser = argparse.ArgumentParser(description='Run elliptic 2d server.')
+  parser.add_argument('--port', dest='port', type=int, 
     default=9000, help='Port number')
-	args = parser.parse_args(sys.argv[1:])
+  args = parser.parse_args(sys.argv[1:])
 
-	httpd = make_server('localhost', args.port, application)
-	httpd.serve_forever()
+  httpd = make_server('localhost', args.port, application)
+  httpd.serve_forever()
 
