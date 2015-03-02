@@ -21,7 +21,7 @@ class Elliptic2DDriver:
     self.slvr = None
     self.solution = None
 
-  def triangulate(self, numCells=100):
+  def triangulate(self, numCells=1000):
 
     # number of boundary points
     self.nt = 2*int(math.sqrt(numCells))
@@ -33,7 +33,12 @@ class Elliptic2DDriver:
     xmaxs = -float('inf') * numpy.ones( (2,), numpy.float64 )
     for i in range(self.nt):
       t = i * self.dt
-      points.append( numpy.array([self.xFunc(t), self.yFunc(t)]) )
+      x, y = self.xFunc(t), self.yFunc(t)
+      xmins[0] = min(xmins[0], x)
+      xmins[1] = min(xmins[1], y)
+      xmaxs[0] = max(xmaxs[0], x)
+      xmaxs[1] = max(xmaxs[1], y)
+      points.append( numpy.array([x, y]) )
 
     # rough estimate of the max triangle area
     maxArea = (xmaxs[0] - xmins[0])*(xmaxs[1] - xmins[1])/float(numCells)
