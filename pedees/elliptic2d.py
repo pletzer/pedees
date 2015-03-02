@@ -115,8 +115,8 @@ class Elliptic2d:
 			offDiag = deltaLength * vals[0] / 6.0
 			self.mat[i1, i1] += diag
 			self.mat[i2, i2] += diag
-			self.mat[i1, i2] += offDiag
-			self.mat[i2, i1] += offDiag
+			self.mat[i1, i2] = self.mat.get((i1, i2), 0.0) + offDiag
+			self.mat[i2, i1] = self.mat.get((i2, i1), 0.0) + offDiag
 
 			# modification of the source term
 			sVal = deltaLength * vals[1] / 2.0
