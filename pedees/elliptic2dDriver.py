@@ -19,6 +19,7 @@ class Elliptic2DDriver:
     self.delny = None
     self.ellipt = Elliptic2d(self.fFunc, self.gFunc, self.sFunc)
     self.slvr = None
+    self.solution = None
 
   def triangulate(self, numCells=100):
 
@@ -86,12 +87,15 @@ class Elliptic2DDriver:
     # max number of iterations
     numIters = self.n
 
-    return self.slvr.solve(precond = precond, x0 = x0, 
+    self.solution = self.slvr.solve(precond = precond, x0 = x0, 
                            numIters=numIters, tol=1.e-10, verbose=True)
 
 
   def show(self):
-    pass
+		from plot import Plot
+		pl = Plot(self.delny, width=500, height=500)
+		pl.show(self.solution)
+    
       
 ################################################################################
 def main():
@@ -122,7 +126,9 @@ def main():
 
   e.applyBoundaryConditions(bFunc, cFunc)
 
-  print e.solve()
+  e.solve()
+
+  e.show()
 
 if __name__ == '__main__':
   main()

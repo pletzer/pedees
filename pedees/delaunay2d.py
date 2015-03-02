@@ -54,7 +54,7 @@ class Delaunay2d:
     """
     @return triangles
     """
-    return self.triangles
+    return self.triangles.values()
 
   def getEdges(self):
     """
