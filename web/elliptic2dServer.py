@@ -16,7 +16,7 @@ FORM = b'''
 <head>
 <style>
 #topPane {
-  background-color: orange;
+  background-color: lightgray;
   color: black;
   padding:5px;
   float:left;
@@ -43,15 +43,22 @@ FORM = b'''
 &psi; =  
    <input type="text" placeholder="Enter function(x, y)" name="sFunc" value="0" size=10>
 
+<p>
+
 </label> subject to &part; &psi; / &part; n + 
    <input type="text" placeholder="Enter function(t)" name="bFunc" value="1" size=2>
 &psi; =  
    <input type="text" placeholder="Enter function(t)" name="cFunc" value="sin(2*pi*t)" size=2>
 </label> 
+
+</p>
+
+<p>
 on x =  <input type="text" placeholder="Enter function(t)" name="xFunc" value="cos(2*pi*t)" size=10>
    y = <input type="text" placeholder="Enter function(t)" name="yFunc" value="sin(2*pi*t)" size=10>
 </label>
 <input type="submit" value="Go">
+</p>
 </div>
 </form>
 

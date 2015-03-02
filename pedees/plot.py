@@ -65,6 +65,16 @@ class Plot:
         ctx.fillStyle = "%s"; ctx.fill();
         ''' % (pxa, pya, pxb, pyb, pxc, pyc, colorHexStr)
     
+    for edge in self.triangulation.getEdges():
+      i1, i2 = edge
+      v1, v2 = points[i1], points[i2]
+      px1, px2 = self.x2Pix(v1[0]), self.x2Pix(v2[0])
+      py1, py2 = self.y2Pix(v1[1]), self.y2Pix(v2[1])
+      res += '''
+        ctx.beginPath(); ctx.moveTo(%d, %d); ctx.lineTo(%d, %d); ctx.stroke();
+      ''' % (px1, py1, px2, py2)
+      self.canvas.create_line(px1, py1, px2, py2, fill='black')
+
     res += '''    
   </script> 
 </canvas>
