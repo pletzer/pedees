@@ -46,16 +46,16 @@ FORM = b'''
 <p>
 
 </label> subject to &part; &psi; / &part; n + 
-   <input type="text" placeholder="Enter function(t)" name="bFunc" value="1" size=2>
+   <input type="text" placeholder="Enter function(t)" name="bFunc" value="1" size=13>
 &psi; =  
-   <input type="text" placeholder="Enter function(t)" name="cFunc" value="sin(2*pi*t)" size=2>
+   <input type="text" placeholder="Enter function(t)" name="cFunc" value="sin(2*pi*t)" size=17>
 </label> 
 
 </p>
 
 <p>
-on x =  <input type="text" placeholder="Enter function(t)" name="xFunc" value="cos(2*pi*t)" size=10>
-   y = <input type="text" placeholder="Enter function(t)" name="yFunc" value="sin(2*pi*t)" size=10>
+on x =  <input type="text" placeholder="Enter function(t)" name="xFunc" value="cos(2*pi*t)" size=19>
+   y = <input type="text" placeholder="Enter function(t)" name="yFunc" value="sin(2*pi*t)" size=19>
 </label>
 <input type="submit" value="Go">
 </p>
