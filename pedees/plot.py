@@ -32,10 +32,12 @@ class Plot:
     return self.padding + self.h*(self.ymax - y)/(self.ymax - self.ymin)
 
   def getRGB(self, v, vmin, vmax):
+
+    # normalize
     x = (v - vmin)/(vmax - vmin)
-    blue = min((max((4*(0.75-x), 0.)), 1.))
-    red  = min((max((4*(x-0.25), 0.)), 1.))
-    green= min((max((4*math.fabs(x-0.5)-1., 0.)), 1.))
+    blue = math.cos(0.5*math.pi*x)**2
+    green = math.cos(math.pi*(x-0.5))**2
+    red = math.cos(0.5*math.pi*(x-1.0))**2
     return "#%02x%02x%02x" % (red*255, green*255, blue*255)
 
   def jsShow(self, solution):
