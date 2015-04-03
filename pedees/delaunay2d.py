@@ -564,7 +564,10 @@ def testRandomTrianglesRefine():
   delaunay = Delaunay2d(xyPoints, maxArea=0.005)
   delaunay.triangulate()
   delaunay.makeDelaunay()
-  delaunay.show()
+  try:
+    delaunay.show()
+  except:
+    pass
 
 def testAnnulus():
   import math
@@ -588,7 +591,12 @@ def testAnnulus():
   #delaunay.makeDelaunay()
   # carve out interior
   delaunay.carve(xyPointsInterior)
-  delaunay.show(showCells=False, showContour=xyPointsInterior, showVertices=False)
+  try:
+    delaunay.show(showCells=False, 
+      showContour=xyPointsInterior, 
+      showVertices=False)
+  except:
+    pass
 
 if __name__ == '__main__': 
   testOneTriangle()
