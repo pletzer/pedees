@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
-import Tkinter
+try:
+  import Tkinter
+except:
+  pass
+
 import math
 import sys
 
@@ -14,9 +18,12 @@ class Plot:
     self.w = width - 2*self.padding
     self.h = height - 2*self.padding
 
-    self.master = Tkinter.Tk()
-    self.canvas = Tkinter.Canvas(bg="white", width=width, height=height)
-    self.canvas.pack()
+    try:
+      self.master = Tkinter.Tk()
+      self.canvas = Tkinter.Canvas(bg="white", width=width, height=height)
+      self.canvas.pack()
+    except:
+      pass
 
     self.triangulation = tri
     points = tri.getPoints()
