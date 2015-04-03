@@ -2,8 +2,9 @@
 
 from distutils.core import setup
 
+from pedees.version import __version__
 setup(name='pedees',
-      version='0.2',
+      version=__version__,
       description='A simple PDE solver',
       author='Alexander Pletzer',
       author_email='alexander@gokliya.net',
