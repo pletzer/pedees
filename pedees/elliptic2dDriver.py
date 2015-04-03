@@ -124,7 +124,11 @@ def main():
 
   e.solve()
 
-  e.show()
+  try:
+    # requires Tkinter
+    e.show()
+  except:
+    pass
 
 if __name__ == '__main__':
   main()
