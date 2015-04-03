@@ -88,7 +88,6 @@ def application(environ, start_response):
     elliptic = Elliptic2dDriver(fFunc=fFuncStr, gFunc=gFuncStr, sFunc=sFuncStr, \
                                 xFunc=xFuncStr, yFunc=yFuncStr)
 
-    print >> sys.stderr, '*** elliptic.xFuncStr = ', elliptic.xFuncStr
     elliptic.triangulate(numCells = 100)
 
     bFunc = post.getfirst("bFunc", '1.0')
@@ -96,7 +95,6 @@ def application(environ, start_response):
     elliptic.applyBoundaryConditions(bFunc=bFunc, cFunc=cFunc)
 
     elliptic.solve()
-    print >> sys.stderr, '???? solution = ', elliptic.getSolution()
 
     pl = Plot(elliptic.getTriangulation(), width=500, height=500)
     js = pl.jsShow(elliptic.getSolution())
