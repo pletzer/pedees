@@ -18,6 +18,8 @@ class Plot:
     self.w = width - 2*self.padding
     self.h = height - 2*self.padding
 
+    self.master = None
+    self.canvas = None
     try:
       self.master = Tkinter.Tk()
       self.canvas = Tkinter.Canvas(bg="white", width=width, height=height)
@@ -82,7 +84,6 @@ class Plot:
       res += '''
         ctx.beginPath(); ctx.moveTo(%d, %d); ctx.lineTo(%d, %d); ctx.stroke();
       ''' % (px1, py1, px2, py2)
-      self.canvas.create_line(px1, py1, px2, py2, fill='black')
 
     res += '''    
   </script> 
