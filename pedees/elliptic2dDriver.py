@@ -104,9 +104,10 @@ class Elliptic2dDriver:
     # max number of iterations
     numIters = self.n
 
+    diag = {}
     self.solution = self.slvr.solve(precond = precond, x0 = x0, 
-                           numIters=numIters, tol=1.e-10, verbose=True)
-
+                           numIters=numIters, tol=1.e-10, verbose=True, diag=diag)
+    return diag
 
   def show(self):
 		from plot import Plot
