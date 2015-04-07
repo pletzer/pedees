@@ -134,7 +134,8 @@ def application(environ, start_response):
       params['message'] = 'CG error: ' + diag['error in the norm']
 
       pl = Plot(elliptic.getTriangulation(), width=WIDTH, height=WIDTH)
-      params['canvas'] = '<div id="canvasPane">\n' + pl.jsShow(elliptic.getSolution()) + '\n</div>'
+      params['canvas'] = '<div id="canvasPane">\n' + \
+                         pl.jsShow(elliptic.getSolution()) + '\n</div>'
 
   html = (FORM % params)
 
