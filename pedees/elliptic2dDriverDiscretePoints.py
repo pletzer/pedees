@@ -1,37 +1,15 @@
 #/usr/bin/env python
 
 from delaunay2d import Delaunay2d
-from inside import Inside
 from elliptic2d import Elliptic2d
-from cg import Cg
-import math
+from elliptic2dDriverBase import Elliptic2dDriverBase
 import numpy
-from math import pi, cos, sin, tan, acos, asin, atan2, exp, log
 
-class Elliptic2dDriverDiscretePoints:
+class Elliptic2dDriverDiscretePoints(Elliptic2dDriverBase):
 
-  def __init__(self, fFunc, gFunc, sFunc, boundaryPoints):
-    self.fFuncStr = fFunc
-    self.gFuncStr = gFunc
-    self.sFuncStr = sFunc
-    self.boundaryPoints = [numpy.array(p) for p in boundaryPoints]
-
-    self.delny = None
-    self.ellipt = Elliptic2d(self.ffunc, self.gfunc, self.sfunc)
-    self.slvr = None
-    self.solution = None
-  
-  def getTriangulation(self):
-    return self.delny
-
-  def getSolution(self):
-    return self.solution
-
-  def triangulate(self, numCells=1000):
-
-    # number of boundary points
-    self.nt = 2*int(math.sqrt(numCells))
-    self.dt = 1.0/float(self.nt)
+  def triangulate(self, boundaryPoints, numCells=1000):
+      
+    self.boundaryPoints = [ numpy.array(p) for p in boundaryPoints ]
 
     # compute the box dimensions
     xmins =  float('inf') * numpy.ones( (2,), numpy.float64 )
@@ -50,76 +28,16 @@ class Elliptic2dDriverDiscretePoints:
     self.delny.makeDelaunay()
     self.delny.refine()
     self.delny.makeDelaunay() # this may not be necessary
-
-    self.ellipt.assemble(self.delny)
-
-  def ffunc(self, xy):
-    x, y = xy
-    return eval(self.fFuncStr)
-
-  def gfunc(self, xy):
-    x, y = xy
-    return eval(self.gFuncStr)
-
-  def sfunc(self, xy):
-    x, y = xy
-    return eval(self.sFuncStr)
-
-  def xfunc(self, t):
-  	return eval(self.xFuncStr)
-
-  def yfunc(self, t):
-  	return eval(self.yFuncStr)
-
-  def applyBoundaryConditions(self, bFunc, cFunc):
-
-    bcs = {}
-    for i in range(self.nt):
-      t = (i + 0.5) * self.dt
-      b, c = eval(bFunc), eval(cFunc)
-      bcs[i, (i+1)%self.nt] = (b, c)
-
-    self.ellipt.applyBoundaryConditions(bcs)
-
-    self.slvr = Cg(self.ellipt.getStiffnessMatrix(), \
-                              self.ellipt.getSourceVector())
-
-  def solve(self):
-        
-    # initial guess
-    self.n = len(self.delny.points)
-
-    mat = self.ellipt.getStiffnessMatrix()
-
-    # use diagonal matrix as preconditioner
-    precond = numpy.array( [mat[i, i] for i in range(self.n)] )
-
-    # initial guess
-    x0 = numpy.zeros( (self.n,), numpy.float64 )
-
-    # max number of iterations
-    numIters = self.n
-
-    diag = {}
-    self.solution = self.slvr.solve(precond = precond, x0 = x0, 
-                           numIters=numIters, tol=1.e-10, verbose=True, diag=diag)
-    return diag
-
-  def show(self):
-		from plot import Plot
-		pl = Plot(self.delny, width=500, height=500)
-		pl.show(self.solution)
-    
       
 ################################################################################
 def main():
 
   points = [ [0., 0.], [0., 1.], [1., 1.] ]
-  e = Elliptic2dDriverDiscretePoints(fFunc='1.0', gFunc='0.0', sFunc='0.0',
-                                     boundaryPoints=points)
-  e.triangulate(numCells = 100)
+  e = Elliptic2dDriverDiscretePoints(fFunc='1.0', gFunc='0.0', sFunc='0.0')
+  e.triangulate(boundaryPoints=points, numCells = 100)
+  e.assemble()
 
-  e.applyBoundaryConditions(bFunc='1.0', cFunc='sin(2*pi*t)')
+  e.applyBoundaryConditions(bFunc='1.0', cFunc='sin(2*pi*x) + 3.0')
 
   e.solve()
 
