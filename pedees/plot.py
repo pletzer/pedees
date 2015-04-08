@@ -93,6 +93,10 @@ class Plot:
 
   def show(self, solution):
 
+    if self.canvas == None:
+      # need Tkinter
+      return
+
     vmin, vmax = min(solution), max(solution)
     n = len(solution)
     points = self.triangulation.getPoints()

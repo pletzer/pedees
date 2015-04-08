@@ -1,7 +1,6 @@
 #/usr/bin/env python
 
 from delaunay2d import Delaunay2d
-from elliptic2d import Elliptic2d
 from elliptic2dDriverBase import Elliptic2dDriverBase
 import numpy
 
