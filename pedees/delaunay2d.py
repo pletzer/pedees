@@ -44,6 +44,12 @@ class Delaunay2d:
     # keep track of the triangles to remove
     self.trianglesToRemove = set()
 
+  def getBoxLimits(self):
+    """
+    @return the low and high corners of the domain
+    """
+    return self.xmins, self.xmaxs
+
   def getPoints(self):
     """
     @return points

@@ -3,6 +3,7 @@
 from delaunay2d import Delaunay2d
 from elliptic2dDriverBase import Elliptic2dDriverBase
 import numpy
+import math
 
 class Elliptic2dDriverDiscretePoints(Elliptic2dDriverBase):
 
@@ -20,8 +21,29 @@ class Elliptic2dDriverDiscretePoints(Elliptic2dDriverBase):
       xmaxs[0] = max(xmaxs[0], x)
       xmaxs[1] = max(xmaxs[1], y)
 
+    # add Steiner points. Do a triangulation without the Delaunay step. 
+    # Iterate over the boundary edges and add points if edge length 
+    # is > maxEdgeLength
+    tri = Delaunay2d(self.boundaryPoints, maxArea=float('inf')) # no refinement
+    tri.triangulate() # basic triangulation
+    xmins, xmaxs = tri.getBoxLimits()
+
     # rough estimate of the max triangle area
     maxArea = (xmaxs[0] - xmins[0])*(xmaxs[1] - xmins[1])/float(numCells)
+    
+    maxEdgeLength = math.sqrt(maxArea) * 2.0/0.707
+      
+    for boundaryEdge in tri.getBoundaryEdges():
+      ia, ib = boundaryEdge
+      du = self.boundaryPoints[ib] - self.boundaryPoints[ia]
+      distance = math.sqrt( numpy.dot(du, du) )
+      numSteinerPoints = int(distance // maxEdgeLength)
+      du /= float(numSteinerPoints + 1)
+      # add the Steiner points
+      for i in range(1, numSteinerPoints):
+        pt = self.boundaryPoints[ia] + i * du
+        self.boundaryPoints.append(pt)
+
     self.delny = Delaunay2d(self.boundaryPoints, maxArea=maxArea)
     self.delny.triangulate()
     self.delny.makeDelaunay()
